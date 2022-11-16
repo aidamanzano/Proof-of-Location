@@ -58,26 +58,23 @@ class Car():
 
     def move(self, dt, environment_Xcoordinate, environment_Ycoordinate):
         #self.position = max(self.position  + (dt * self.velocity), 0)
-        self.position = self.position + (dt * self.velocity)
-        print('first position update',self.position)
-        self.position_history.append(self.position)
-
+        preliminary_position = self.position + (dt * self.velocity) 
+        print('prelim',preliminary_position, environment_Xcoordinate[0], environment_Xcoordinate[1])
         #if the agent is getting close to the grid boundaries, invert the velocity
         #I am assuming no car would voluntarily drive towards a wall
-        if self.position[0] - self.range_of_sight <= environment_Xcoordinate[0] or self.position[0] + self.range_of_sight >= environment_Xcoordinate[1]: #pass the x and y coordinate of the environment
-            self.vx = -1 * self.vx 
-            self.position[0] = self.position[0] + (dt * self.vx)
-            print('X position update', self.position)
+
+        while preliminary_position[0] <= environment_Xcoordinate[0] or preliminary_position[0] >= environment_Xcoordinate[1]:
+            self.velocity[0] = -1 * self.velocity[0]
+            preliminary_position = self.position + (dt * self.velocity)
+            
+        while preliminary_position[1] <= environment_Ycoordinate[0] or preliminary_position[1] >= environment_Ycoordinate[1]:
+            self.velocity[1] = -1 * self.velocity[1]
+            preliminary_position = self.position + (dt * self.velocity)
         
-        if self.position[1] - self.range_of_sight <= environment_Ycoordinate[0] or self.position[1] + self.range_of_sight >= environment_Ycoordinate[1]:
-            self.vy = -1 * self.vy
-            print(self.position[1], self.vy)
-            self.position[1] = self.position[1] + (dt * self.vy)
-            print('Y position update', self.position)
+        self.position = preliminary_position
+        print('final position',self.position)
+        self.position_history.append(self.position)
         
-        #TODO
-        #sort out the collision business, the car ends up returning to its original position with the current collision control code. 
-        #also need to account for cars not colliding against each other
 
 #Pietro's environment code
 class Environment:
@@ -96,19 +93,19 @@ class Environment:
         #every time there is a car move, check the positions of each
 
     def assign(self, car, dt):
-
-        self.grid[car.x][car.y].add(car.ID)
-        if dt > 1:
         
-            previous_x = car.position[0]
-            previous_y = car.position[1]
+        x_index = int(np.floor(car.position[0]))
+        y_index = int(np.floor(car.position[1]))
+        self.grid[x_index][y_index].add(car.ID)
+        print('old grid', self.grid)
+        if dt > 0:
             
-            self.grid[previous_x][previous_y].remove(car.ID)
-            
+            self.grid[x_index][y_index].remove(car.ID)
             car.move(dt, self.x_coordinates, self.y_coordinates)
-            
-        new_x = car.position[0]
-        new_y = car.position[1]
+
+        new_x = int(np.floor(car.position[0]))
+        new_y = int(np.floor(car.position[1]))
+        
         self.grid[new_x][new_y].add(car.ID)
         print('new grid', self.grid)
 
@@ -129,7 +126,7 @@ class Protocol(Car):
 London = Environment([0,5], [0,6], 1)
 print(London.grid)
 
-Honda = Car([5,3], [-5,8], 10.0, 'Aida ID')
+Honda = Car([5,3], [-0.1,0.3], 0.1, 'Aida ID')
 print('position before moving', Honda.position)
 #Zoe = Car([1,3], [7,-2], 2)
 #print(Zoe.position_history)

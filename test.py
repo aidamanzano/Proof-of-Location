@@ -29,3 +29,8 @@ print(Hyundai.position)
 print(Hyundai.position_history)
 
 print(np.array([-5,8])*(-1))
+
+
+
+a = np.array([4. , 5.5])
+print((np.ceil(a)).astype(int))
