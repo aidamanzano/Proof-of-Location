@@ -57,7 +57,7 @@ class Car():
             raise Exception("The car is not in the set!") 
 
     def move(self, dt, environment_Xcoordinate, environment_Ycoordinate):
-        #self.position = max(self.position  + (dt * self.velocity), 0)
+        
         preliminary_position = self.position + (dt * self.velocity) 
         print('prelim',preliminary_position, environment_Xcoordinate[0], environment_Xcoordinate[1])
         #if the agent is getting close to the grid boundaries, invert the velocity
