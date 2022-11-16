@@ -76,8 +76,8 @@ class Car():
         self.position_history.append(self.position)
         
 
-#Pietro's environment code
 class Environment:
+    #Pietro's environment definition funct.
     def __init__(self, x_coordinates:list, y_coordinates:list, grid_size):
 
         self.x_coordinates = x_coordinates
@@ -88,8 +88,7 @@ class Environment:
         self.height = int(self.y_coordinates[1]-self.y_coordinates[0]/self.grid_size)
         self.grid = [[set() for i in range(self.width)] for j in range(self.height)]
         
-        #TODO assign agents to a cell
-        #if car is in position, put the car ID in the cell set of that position.
+        #TODO 
         #every time there is a car move, check the positions of each
 
     def assign(self, car, dt):
@@ -129,8 +128,6 @@ for car in range(Number_of_Cars):
     range_of_sight = random.randint(1, 2)
     ID = str(car)
     cars.append(Car(position, velocity, range_of_sight, ID))
-
-
 
 London = Environment([0,6], [0,6], 1)
 print(London.grid)
