@@ -1,4 +1,5 @@
 import numpy as np
+import random
 
 class Car():
     """class to create a car with a given position, range of sight and list of neighbors"""
@@ -42,6 +43,7 @@ class Car():
         else:
             return False
 
+    #TODO: have to update the list of neighbours in the move function ever time the car moves to a new grid
     def add_neighbour(self, car):
         if self.is_newCar_in_range_of_sight(car.position):
             self.neighbors.append(car)
@@ -74,6 +76,7 @@ class Car():
             print('Y position update', self.position)
         
         #TODO
+        #sort out the collision business, the car ends up returning to its original position with the current collision control code. 
         #also need to account for cars not colliding against each other
 
 #Pietro's environment code
@@ -108,6 +111,18 @@ class Environment:
         new_y = car.position[1]
         self.grid[new_x][new_y].add(car.ID)
         print('new grid', self.grid)
+
+class Protocol(Car):
+    def __init__(self, position: list, velocity: list, range_of_sight: float, ID):
+        super().__init__(position, velocity, range_of_sight, ID)
+
+    def claim_position(self):
+        return self.ID, self.position
+
+    def name_witness(self):
+        #select two witnesses at random from list of neighbours
+        self.witnesses = random.choices(self.neighbors, k = 2)
+        return self.witnesses
 
 
 
