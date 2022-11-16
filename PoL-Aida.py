@@ -97,7 +97,7 @@ class Environment:
         x_index = int(np.floor(car.position[0]))
         y_index = int(np.floor(car.position[1]))
         self.grid[x_index][y_index].add(car.ID)
-        print('old grid', self.grid)
+        #print('old grid', self.grid)
         if dt > 0:
             
             self.grid[x_index][y_index].remove(car.ID)
@@ -107,7 +107,7 @@ class Environment:
         new_y = int(np.floor(car.position[1]))
         
         self.grid[new_x][new_y].add(car.ID)
-        print('new grid', self.grid)
+        #print('new grid', self.grid)
 
 class Protocol(Car):
     def __init__(self, position: list, velocity: list, range_of_sight: float, ID):
@@ -121,23 +121,24 @@ class Protocol(Car):
         self.witnesses = random.choices(self.neighbors, k = 2)
         return self.witnesses
 
+Number_of_Cars= 5
+cars = []
+for car in range(Number_of_Cars):
+    position = random.sample(range(0, 6), 2)
+    velocity = random.sample(range(-1, 1), 2)
+    range_of_sight = random.randint(1, 2)
+    ID = str(car)
+    cars.append(Car(position, velocity, range_of_sight, ID))
 
 
-London = Environment([0,5], [0,6], 1)
+
+London = Environment([0,6], [0,6], 1)
 print(London.grid)
 
-Honda = Car([5,3], [-0.1,0.3], 0.1, 'Aida ID')
-print('position before moving', Honda.position)
-#Zoe = Car([1,3], [7,-2], 2)
-#print(Zoe.position_history)
-#print(Honda.is_newCar_in_range_of_sight(Zoe.position))
+for car in cars:
+    London.assign(car, 0.1)
 
-London.assign(Honda, 5)
-
-
-#Honda.move(5, London)
-#print('position after moving', Honda.position)
-#print(Honda.position_history)
+print('initialised grid', London.grid)
 
 
 
