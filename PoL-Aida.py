@@ -132,18 +132,18 @@ def Visualise(cars, environment):
 
 #---------------------------- Calls -----------------------
 
-Number_of_Cars= 3
+Number_of_Cars= 5
 cars = []
 
 #initialising cars with a random position, velocity and range of sight
 for car in range(Number_of_Cars):
-    position = random.sample(range(0, 6), 2)
+    position = random.sample(range(0, 2), 2)
     velocity = random.sample(range(-1, 1), 2)
     range_of_sight = random.randint(1, 2)
     ID = str(car)
     cars.append(Car(position, velocity, range_of_sight, ID))
 
-London = Environment([0,6], [0,6], 1)
+London = Environment([0,2], [0,2], 0.25)
 
 for car in cars:
     London.assign(car, 0.1)
