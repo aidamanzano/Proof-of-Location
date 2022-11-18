@@ -34,3 +34,18 @@ print(np.array([-5,8])*(-1))
 
 a = np.array([4. , 5.5])
 print((np.ceil(a)).astype(int))
+
+import matplotlib.pyplot as plt
+
+array = np.array([[[0.953, 0.938, 0.938],
+[0.959, 0.951, 0.944],
+[0.977, 0.976, 0.973]]])
+
+fig, ax = plt.subplots()
+ax.matshow(array, cmap='Greens')
+ax.axis('off')
+for (i, j), z in np.ndenumerate(array[0]):
+    ax.text(j, i, '{:0.1f}'.format(z), ha='center', va='center')
+
+fig = plt.gcf()
+plt.show()

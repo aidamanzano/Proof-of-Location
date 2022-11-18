@@ -11,12 +11,6 @@ class Car():
         self.position_history.append(np.array(position))
         self.range_of_sight = range_of_sight
 
-        self.x = position[0]
-        self.y = position[1]
-
-        self.vx = velocity[0]
-        self.vy = velocity[1]
-
         self.neighbors = []
         self.ID = ID
 
@@ -120,7 +114,7 @@ class Protocol(Car):
         self.witnesses = random.choices(self.neighbors, k = 2)
         return self.witnesses
 
-Number_of_Cars= 5
+Number_of_Cars= 3
 cars = []
 for car in range(Number_of_Cars):
     position = random.sample(range(0, 6), 2)
@@ -130,12 +124,25 @@ for car in range(Number_of_Cars):
     cars.append(Car(position, velocity, range_of_sight, ID))
 
 London = Environment([0,6], [0,6], 1)
-print(London.grid)
-
+print('first grid', London.grid)
 for car in cars:
     London.assign(car, 0.1)
 
 print('initialised grid', London.grid)
+
+#Visualisation
+from matplotlib import pyplot as plt
+for car in cars:
+    x = car.position[0]
+    y = car.position[1]
+
+    plt.xlim(London.x_coordinates[0], London.x_coordinates[1])
+    plt.ylim(London.y_coordinates[0], London.y_coordinates[1])
+    
+    plt.plot(x, y, marker="o", markersize=10, markerfacecolor="magenta")
+    
+plt.grid()
+plt.show()
 
 
 
