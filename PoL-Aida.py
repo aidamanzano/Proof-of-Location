@@ -26,7 +26,7 @@ class Car():
         self._range_of_sight = value
     
 
-    def is_newCar_in_range_of_sight(self, location):
+    def is_in_range_of_sight(self, location):
         """This is a check to see if the position of a car that is being 'viewed' is within the range of sight of the viewing car.
         I assume the range of sight is a radius, and calculate if the position of the viewed car falls within the circle 
         of range of sight"""
@@ -39,7 +39,7 @@ class Car():
 
     #TODO: have to update the list of neighbours in the move function ever time the car moves to a new grid
     def add_neighbour(self, car):
-        if self.is_newCar_in_range_of_sight(car.position):
+        if self.is_in_range_of_sight(car.position):
             self.neighbors.append(car)
         else:
             raise Exception("The car is not in range of sight, therefore it cannot be a neighbour")
@@ -49,6 +49,17 @@ class Car():
             return True
         else:
             raise Exception("The car is not in the set!") 
+
+    def claim_position(self):
+            return self.ID, self.position
+
+    def name_witness(self):
+        #select two witnesses at random from list of neighbours
+        if len(self.neighbors) > 0:
+            self.neighbors = random.choices(self.neighbors, k = 1)
+        else:
+            raise Exception("The car has no neighbours to witness its position!")
+        return self.witnesses
 
     def move(self, dt, environment_Xcoordinate, environment_Ycoordinate):
         
@@ -95,6 +106,8 @@ class Environment:
             
             self.grid[x_index][y_index].remove(car.ID)
             car.move(dt, self.x_coordinates, self.y_coordinates)
+            for neighbour in self.grid[x_index][y_index]:
+                car.add_neighbour(neighbour) #add_neighbour function calls is_in_range_of_sight function, and only appends if True
 
         new_x = int(np.floor(car.position[0]))
         new_y = int(np.floor(car.position[1]))
@@ -102,20 +115,27 @@ class Environment:
         self.grid[new_x][new_y].add(car.ID)
         #print('new grid', self.grid)
 
-class Protocol(Car):
-    def __init__(self, position: list, velocity: list, range_of_sight: float, ID):
-        super().__init__(position, velocity, range_of_sight, ID)
+def Visualise(cars, environment):
+    from matplotlib import pyplot as plt
+    for car in cars:
+        x = car.position[0]
+        y = car.position[1]
 
-    def claim_position(self):
-        return self.ID, self.position
+        plt.xlim(environment.x_coordinates[0], environment.x_coordinates[1])
+        plt.ylim(environment.y_coordinates[0], environment.y_coordinates[1])
+        
+        plt.plot(x, y, marker="o", markersize=10, markerfacecolor="magenta")
+        
+    plt.grid()
+    plt.show()
 
-    def name_witness(self):
-        #select two witnesses at random from list of neighbours
-        self.witnesses = random.choices(self.neighbors, k = 2)
-        return self.witnesses
+
+#---------------------------- Calls -----------------------
 
 Number_of_Cars= 3
 cars = []
+
+#initialising cars with a random position, velocity and range of sight
 for car in range(Number_of_Cars):
     position = random.sample(range(0, 6), 2)
     velocity = random.sample(range(-1, 1), 2)
@@ -124,25 +144,31 @@ for car in range(Number_of_Cars):
     cars.append(Car(position, velocity, range_of_sight, ID))
 
 London = Environment([0,6], [0,6], 1)
-print('first grid', London.grid)
+
 for car in cars:
     London.assign(car, 0.1)
 
-print('initialised grid', London.grid)
+#-------------Aida Proof of Location Protocol-----------------
+#Car 1 claims their position
+Car_1 = cars[0]
 
-#Visualisation
-from matplotlib import pyplot as plt
-for car in cars:
-    x = car.position[0]
-    y = car.position[1]
+position_claim = Car_1 .claim_position()
+print(position_claim)
 
-    plt.xlim(London.x_coordinates[0], London.x_coordinates[1])
-    plt.ylim(London.y_coordinates[0], London.y_coordinates[1])
-    
-    plt.plot(x, y, marker="o", markersize=10, markerfacecolor="magenta")
-    
-plt.grid()
-plt.show()
+#Car 1 names two witnesses
+named_witnesses = Car_1.name_witness()
+print(named_witnesses)
+
+# Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
+
+# If previous is True: 
+
+# Witness 1 must name their attestors and Witness 2 must name their attestors
+
+# Attestors must be a neighbour AND be in range of sight of witness
+
+#If all True: Car 1 can submit position.
+
 
 
 
