@@ -171,4 +171,3 @@ print(named_witnesses)
 # Attestors must be a neighbour AND be in range of sight of witness
 
 #If all True: Car 1 can submit position.
-
