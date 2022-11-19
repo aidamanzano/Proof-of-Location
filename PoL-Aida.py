@@ -39,6 +39,7 @@ class Car():
 
     #TODO: have to update the list of neighbours in the move function ever time the car moves to a new grid
     def add_neighbour(self, car):
+        print(car)
         if self.is_in_range_of_sight(car.position):
             self.neighbors.append(car)
         else:
@@ -68,11 +69,12 @@ class Car():
         #if the agent is getting close to the grid boundaries, invert the velocity
         #I am assuming no car would voluntarily drive towards a wall
 
-        while preliminary_position[0] <= environment_Xcoordinate[0] or preliminary_position[0] >= environment_Xcoordinate[1]:
+        if preliminary_position[0] <= environment_Xcoordinate[0] or preliminary_position[0] >= environment_Xcoordinate[1]:
+            
             self.velocity[0] = -1 * self.velocity[0]
             preliminary_position = self.position + (dt * self.velocity)
             
-        while preliminary_position[1] <= environment_Ycoordinate[0] or preliminary_position[1] >= environment_Ycoordinate[1]:
+        if preliminary_position[1] <= environment_Ycoordinate[0] or preliminary_position[1] >= environment_Ycoordinate[1]:
             self.velocity[1] = -1 * self.velocity[1]
             preliminary_position = self.position + (dt * self.velocity)
         
@@ -140,12 +142,13 @@ for car in range(Number_of_Cars):
     position = random.sample(range(0, 2), 2)
     velocity = random.sample(range(-1, 1), 2)
     range_of_sight = random.randint(1, 2)
-    ID = str(car)
+    ID = car
     cars.append(Car(position, velocity, range_of_sight, ID))
 
-London = Environment([0,2], [0,2], 0.25)
-
+London = Environment([0,10], [0,10], 0.25)
+print(cars)
 for car in cars:
+    print(car)
     London.assign(car, 0.1)
 
 #-------------Aida Proof of Location Protocol-----------------
