@@ -172,8 +172,3 @@ print(named_witnesses)
 
 #If all True: Car 1 can submit position.
 
-
-
-
-
-#comment
