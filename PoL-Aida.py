@@ -60,7 +60,7 @@ class Car():
             self.neighbors = random.choices(self.neighbors, k = 1)
         else:
             raise Exception("The car has no neighbours to witness its position!")
-        return self.witnesses
+        return self.neighbors
 
     def move(self, dt, environment_Xcoordinate, environment_Ycoordinate):
         
@@ -102,19 +102,20 @@ class Environment:
         
         x_index = int(np.floor(car.position[0]))
         y_index = int(np.floor(car.position[1]))
-        self.grid[x_index][y_index].add(car.ID)
-        #print('old grid', self.grid)
+        self.grid[x_index][y_index].add(car)
+        print('car', car)
+        #raise Exception()
         if dt > 0:
             
-            self.grid[x_index][y_index].remove(car.ID)
+            self.grid[x_index][y_index].remove(car)
             car.move(dt, self.x_coordinates, self.y_coordinates)
-            for neighbour in self.grid[x_index][y_index]:
+            for neighbour in self.grid[x_index][y_index]: #neighbour here is an int, not the car instance
                 car.add_neighbour(neighbour) #add_neighbour function calls is_in_range_of_sight function, and only appends if True
 
         new_x = int(np.floor(car.position[0]))
         new_y = int(np.floor(car.position[1]))
         
-        self.grid[new_x][new_y].add(car.ID)
+        self.grid[new_x][new_y].add(car)
         #print('new grid', self.grid)
 
 def Visualise(cars, environment):
@@ -142,20 +143,20 @@ for car in range(Number_of_Cars):
     position = random.sample(range(0, 2), 2)
     velocity = random.sample(range(-1, 1), 2)
     range_of_sight = random.randint(1, 2)
-    ID = car
+    ID = str(car)
     cars.append(Car(position, velocity, range_of_sight, ID))
 
 London = Environment([0,10], [0,10], 0.25)
 print(cars)
 for car in cars:
-    print(car)
+    #print(car)
     London.assign(car, 0.1)
 
 #-------------Aida Proof of Location Protocol-----------------
 #Car 1 claims their position
 Car_1 = cars[0]
 
-position_claim = Car_1 .claim_position()
+position_claim = Car_1.claim_position()
 print(position_claim)
 
 #Car 1 names two witnesses
