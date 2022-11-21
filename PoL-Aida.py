@@ -1,5 +1,7 @@
 import numpy as np
 import random
+import networkx as nx
+from matplotlib import pyplot as plt
 
 class Car():
     """class to create a car with a given position, range of sight and list of neighbors"""
@@ -37,9 +39,9 @@ class Car():
         else:
             return False
 
-    #TODO: have to update the list of neighbours in the move function ever time the car moves to a new grid
     def add_neighbour(self, car):
-        print(car)
+        #wipe neighbours list every time this function is called
+        self.neighbors = []
         if self.is_in_range_of_sight(car.position):
             self.neighbors.append(car)
         else:
@@ -65,7 +67,6 @@ class Car():
     def move(self, dt, environment_Xcoordinate, environment_Ycoordinate):
         
         preliminary_position = self.position + (dt * self.velocity) 
-        print('prelim',preliminary_position, environment_Xcoordinate[0], environment_Xcoordinate[1])
         #if the agent is getting close to the grid boundaries, invert the velocity
         #I am assuming no car would voluntarily drive towards a wall
 
@@ -79,8 +80,9 @@ class Car():
             preliminary_position = self.position + (dt * self.velocity)
         
         self.position = preliminary_position
-        print('final position',self.position)
         self.position_history.append(self.position)
+        
+        #TODO: have to update the list of neighbours in the move function ever time the car moves to a new grid
         
 
 class Environment:
@@ -94,32 +96,28 @@ class Environment:
         self.width = int(self.x_coordinates[1]-self.x_coordinates[0]/self.grid_size)       
         self.height = int(self.y_coordinates[1]-self.y_coordinates[0]/self.grid_size)
         self.grid = [[set() for i in range(self.width)] for j in range(self.height)]
-        
-        #TODO 
-        #every time there is a car move, check the positions of each
+
 
     def assign(self, car, dt):
         
         x_index = int(np.floor(car.position[0]))
         y_index = int(np.floor(car.position[1]))
         self.grid[x_index][y_index].add(car)
-        print('car', car)
-        #raise Exception()
+        
         if dt > 0:
             
             self.grid[x_index][y_index].remove(car)
+            #TODO NEED TO REMOVE CAR FROM every other car's Neighbours LIST EVERY TIME IT LEAVES A GRID
             car.move(dt, self.x_coordinates, self.y_coordinates)
-            for neighbour in self.grid[x_index][y_index]: #neighbour here is an int, not the car instance
-                car.add_neighbour(neighbour) #add_neighbour function calls is_in_range_of_sight function, and only appends if True
+            for nearby_car in self.grid[x_index][y_index]: #neighbour here is a class instance of the car, so we can access its position in the is_neighbour function
+                car.add_neighbour(nearby_car) #add_neighbour function calls is_in_range_of_sight function, and only appends if True
 
         new_x = int(np.floor(car.position[0]))
         new_y = int(np.floor(car.position[1]))
         
         self.grid[new_x][new_y].add(car)
-        #print('new grid', self.grid)
 
 def Visualise(cars, environment):
-    from matplotlib import pyplot as plt
     for car in cars:
         x = car.position[0]
         y = car.position[1]
@@ -132,36 +130,56 @@ def Visualise(cars, environment):
     plt.grid()
     plt.show()
 
-
 #---------------------------- Calls -----------------------
 
-Number_of_Cars= 5
+Number_of_Cars= 100
 cars = []
 
 #initialising cars with a random position, velocity and range of sight
 for car in range(Number_of_Cars):
-    position = random.sample(range(0, 2), 2)
-    velocity = random.sample(range(-1, 1), 2)
-    range_of_sight = random.randint(1, 2)
+    position = (np.random.rand(2)*2).tolist()
+    velocity = ((np.random.rand(2)*2)-1).tolist()
+    range_of_sight = 10
     ID = str(car)
     cars.append(Car(position, velocity, range_of_sight, ID))
 
-London = Environment([0,10], [0,10], 0.25)
-print(cars)
+London = Environment([0,2], [0,2], 0.5)
+def hashable(v):
+    """Determine whether `v` can be hashed."""
+    try:
+        hash(v)
+    except TypeError:
+        return False
+    return True
+
+print(hashable(cars[0]))
+
 for car in cars:
-    #print(car)
     London.assign(car, 0.1)
+
+#print('Grid', London.grid)
+
+#G = nx.Graph()
+#G.add_nodes_from(cars)
+#G.add_nodes_from(cars)
+#for node in G.nodes:
+    #print('FUCK MY LIFE', node.position)
+    #if node.is_in_range_of_sight( location)
+#nx.draw(G)
+#plt.show()  
+
 
 #-------------Aida Proof of Location Protocol-----------------
 #Car 1 claims their position
 Car_1 = cars[0]
 
 position_claim = Car_1.claim_position()
-print(position_claim)
+print('Car '+Car_1.ID +' claims position:',position_claim)
+Visualise(cars, London)
 
 #Car 1 names two witnesses
 named_witnesses = Car_1.name_witness()
-print(named_witnesses)
+print('Car'+Car_1.ID+'names witnesses:', named_witnesses)
 
 # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
 
@@ -172,3 +190,5 @@ print(named_witnesses)
 # Attestors must be a neighbour AND be in range of sight of witness
 
 #If all True: Car 1 can submit position.
+
+#TODO make a graph for the positions that get approved. 
