@@ -39,13 +39,10 @@ class Car():
         else:
             return False
 
-    def add_neighbour(self, car):
-        #wipe neighbours list every time this function is called
-        self.neighbors = []
+    def add_neighbours(self, car):
         if self.is_in_range_of_sight(car.position):
             self.neighbors.append(car)
-        else:
-            raise Exception("The car is not in range of sight, therefore it cannot be a neighbour")
+        return self.neighbors
 
     def is_car_a_neighbour(self, car):
         if car in self.neighbors:
@@ -93,29 +90,35 @@ class Environment:
         self.y_coordinates = y_coordinates
         self.grid_size = grid_size
 
-        self.width = int(self.x_coordinates[1]-self.x_coordinates[0]/self.grid_size)       
-        self.height = int(self.y_coordinates[1]-self.y_coordinates[0]/self.grid_size)
+        self.width = int((self.x_coordinates[1]-self.x_coordinates[0])/self.grid_size)
+     
+        self.height = int((self.y_coordinates[1]-self.y_coordinates[0])/self.grid_size)
         self.grid = [[set() for i in range(self.width)] for j in range(self.height)]
 
 
     def assign(self, car, dt):
-        
-        x_index = int(np.floor(car.position[0]))
-        y_index = int(np.floor(car.position[1]))
-        self.grid[x_index][y_index].add(car)
-        
-        if dt > 0:
-            
-            self.grid[x_index][y_index].remove(car)
-            #TODO NEED TO REMOVE CAR FROM every other car's Neighbours LIST EVERY TIME IT LEAVES A GRID
-            car.move(dt, self.x_coordinates, self.y_coordinates)
-            for nearby_car in self.grid[x_index][y_index]: #neighbour here is a class instance of the car, so we can access its position in the is_neighbour function
-                car.add_neighbour(nearby_car) #add_neighbour function calls is_in_range_of_sight function, and only appends if True
 
-        new_x = int(np.floor(car.position[0]))
-        new_y = int(np.floor(car.position[1]))
+        print(car)
+        
+        x_index = int(np.floor(car.position[0]/self.grid_size))
+        y_index = int(np.floor(car.position[1]/self.grid_size))
+
+        if self.grid[x_index][y_index] != True:
+            self.grid[x_index][y_index].add(car)
+        #print('position', car.position, 'x index', x_index, 'y index', y_index)
+
+        if dt > 0:
+            self.grid[x_index][y_index].remove(car)
+            car.move(dt, self.x_coordinates, self.y_coordinates)
+            car.neighbors = []
+            for nearby_car in self.grid[x_index][y_index]: #neighbour here is a class instance of the car, so we can access its position in the is_neighbour function
+                car.add_neighbours(nearby_car) #add_neighbours function calls is_in_range_of_sight function, and only appends if True
+                #add neighbours after the moving.
+        new_x = int(np.floor(car.position[0]/self.grid_size))
+        new_y = int(np.floor(car.position[1]/self.grid_size))
         
         self.grid[new_x][new_y].add(car)
+        
 
 def Visualise(cars, environment):
     for car in cars:
@@ -143,19 +146,12 @@ for car in range(Number_of_Cars):
     ID = str(car)
     cars.append(Car(position, velocity, range_of_sight, ID))
 
-London = Environment([0,2], [0,2], 0.5)
-def hashable(v):
-    """Determine whether `v` can be hashed."""
-    try:
-        hash(v)
-    except TypeError:
-        return False
-    return True
+London = Environment([0,2], [0,2], 0.25)
 
-print(hashable(cars[0]))
-
-for car in cars:
-    London.assign(car, 0.1)
+for tester in cars:
+    London.assign(tester, 0.1)
+    print(tester.ID, tester.neighbors)
+    
 
 #print('Grid', London.grid)
 
