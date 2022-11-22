@@ -166,16 +166,17 @@ for tester in cars:
 
 
 #-------------Aida Proof of Location Protocol-----------------
-#Car 1 claims their position
-Car_1 = cars[0]
+#A Car claims their position
+#WARNING: CANNOT PICK 1ST CAR, that is in essence the genesis block so it will never have neighbours
+Car_5 = cars[5]
 
-position_claim = Car_1.claim_position()
-print('Car '+Car_1.ID +' claims position:',position_claim)
+position_claim = Car_5.claim_position()
+print('Car '+Car_5.ID +' claims position:',position_claim)
 Visualise(cars, London)
 
 #Car 1 names two witnesses
-named_witnesses = Car_1.name_witness()
-print('Car'+Car_1.ID+'names witnesses:', named_witnesses)
+named_witnesses = Car_5.name_witness()
+print('Car'+Car_5.ID+'names witnesses:', named_witnesses)
 
 # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
 
