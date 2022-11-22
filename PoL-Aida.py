@@ -163,7 +163,7 @@ for car in cars:
 #G.add_nodes_from(cars)
 #G.add_nodes_from(cars)
 #for node in G.nodes:
-    #print('FUCK MY LIFE', node.position)
+    #print('node position', node.position)
     #if node.is_in_range_of_sight( location)
 #nx.draw(G)
 #plt.show()  
