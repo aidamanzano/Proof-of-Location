@@ -1,6 +1,7 @@
 import numpy as np
 import random
 from matplotlib import pyplot as plt
+import networkx as nx
 
 class Car():
     """class to create a car with a given position, range of sight and list of neighbors"""
@@ -78,8 +79,6 @@ class Car():
         self.position = preliminary_position
         self.position_history.append(self.position)
         
-        #TODO: have to update the list of neighbours in the move function ever time the car moves to a new grid
-        
 
 class Environment:
     #Pietro's environment definition funct.
@@ -138,26 +137,21 @@ for car in cars:
     car.move(0.1, London.x_coordinates, London.y_coordinates)
     car.neighbors = []
     London.assign(car)
-print(London.grid)
+#print(London.grid)
 
 for square in London.grid:
-    print(square)
     for set in square:
         for car_ in set:
             for nearby_car in set:
                 if car_ != nearby_car:
                     car_.add_neighbours(nearby_car)
 
-    #print(tester.ID, tester.neighbors)
-    
-
-#print('Grid', London.grid)
 
 #-------------Aida Proof of Location Protocol-----------------
 #A Car claims their position
 #WARNING: CANNOT PICK 1ST CAR, that is in essence the genesis block so it will never have neighbours
 test_car = cars[9]
-
+DAG = nx.Graph()
 position_claim = test_car.claim_position()
 print('Car '+test_car.ID +' claims position:',position_claim)
 Visualise(cars, London)
@@ -172,20 +166,39 @@ for witness in named_witnesses:
     print('witness ID',witness.ID)
     print(witness.is_in_range_of_sight(test_car.position))
 
-# If previous is True: 
+    if witness.is_car_a_neighbour(test_car) == False or witness.is_in_range_of_sight(test_car.position) == False:
+        raise Exception('tut tut tuttt.... Nooooo cheating!!!')
+    else:
+        DAG.add_node(witness, color = 'blue')
 
-# Witness 1 must name their attestors and Witness 2 must name their attestors
+    # Witness 1 must name their attestors and Witness 2 must name their attestors
+    witness_attestors = witness.name_witness()
+    print('witness '+ str(witness.ID) + ' names attestors: ', witness_attestors)
 
-# Attestors must be a neighbour AND be in range of sight of witness
+    # Attestors must be a neighbour AND be in range of sight of witness
+    for attestor in witness_attestors:
+        print('is attestor a neighbour of the witness? ',attestor.is_car_a_neighbour(witness))
+        print('attestor ID',attestor.ID)
+        print(attestor.is_in_range_of_sight(witness.position))
 
-#If all True: Car 1 can submit position.
+    if attestor.is_car_a_neighbour(witness) == False or attestor.is_in_range_of_sight(witness.position) == False:
+        raise Exception('tut tut tuttt.... Nooooo cheating!!!')
+    else:
+        DAG.add_node(attestor, color = 'green')
+    DAG.add_edge(witness, attestor)
 
-#TODO make a graph for the positions that get approved. 
-#G = nx.Graph()
-#G.add_nodes_from(cars)
-#G.add_nodes_from(cars)
-#for node in G.nodes:
-    #print('node position', node.position)
-    #if node.is_in_range_of_sight( location)
-#nx.draw(G)
-#plt.show()  
+color_map = nx.get_node_attributes(DAG, 'color')
+for key in color_map:
+    if color_map[key] == 'green':
+        color_map[key] = 'green'
+    if color_map[key] == 'blue':
+        color_map[key] = 'blue'
+
+car_colors = [color_map.get(node) for node in DAG.nodes()]
+
+nx.draw(DAG, node_color=car_colors)
+plt.show()  
+    
+    #If all True: attestors' positions get verified
+
+
