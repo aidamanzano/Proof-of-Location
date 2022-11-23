@@ -129,21 +129,25 @@ for car in range(Number_of_Cars):
     cars.append(Car(position, velocity, range_of_sight, ID))
 
 London = Environment([0,2], [0,2], 0.25)
-
+#put all the cars into the Environment for the first time
 for car in cars:
     London.assign(car)
 
+#move each car, and put the car in its new corresponding cell in the environment
 for car in cars:
     car.move(0.1, London.x_coordinates, London.y_coordinates)
     car.neighbors = []
     London.assign(car)
 #print(London.grid)
 
+#Once all cars have been moved: for every square in the grid, we go through each car
+#That car must check all other cars in the square and if they are in range of sight
+#add them to its list of neighbours
 for square in London.grid:
     for set in square:
         for car_ in set:
             for nearby_car in set:
-                if car_ != nearby_car:
+                if car_ != nearby_car: #make sure car does not add itself to the list of neighbours
                     car_.add_neighbours(nearby_car)
 
 
@@ -186,8 +190,13 @@ for witness in named_witnesses:
     else:
         DAG.add_node(attestor, color = 'green')
     DAG.add_edge(witness, attestor)
+    
+    #If all True: attestors' positions get verified
+
 
 color_map = nx.get_node_attributes(DAG, 'color')
+#some ugly code i copied from stack overflow to change the color of each node, 
+# probably will do this better later
 for key in color_map:
     if color_map[key] == 'green':
         color_map[key] = 'green'
@@ -199,6 +208,5 @@ car_colors = [color_map.get(node) for node in DAG.nodes()]
 nx.draw(DAG, node_color=car_colors)
 plt.show()  
     
-    #If all True: attestors' positions get verified
 
 
