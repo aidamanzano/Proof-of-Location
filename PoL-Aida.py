@@ -48,18 +48,18 @@ class Car():
         if car in self.neighbors:
             return True
         else:
-            raise Exception("The car is not in the set!") 
+            raise Exception("The car is not a neighbour!") 
 
     def claim_position(self):
             return self.ID, self.position
 
     def name_witness(self):
         #select two witnesses at random from list of neighbours
-        if len(self.neighbors) > 0:
-            self.neighbors = random.choices(self.neighbors, k = 1)
+        if len(self.neighbors) > 1:
+            self.witnesses = random.choices(self.neighbors, k = 2)
         else:
-            raise Exception("The car has no neighbours to witness its position!")
-        return self.neighbors
+            raise Exception("The car does not have sufficient neighbours to witness its position!")
+        return self.witnesses
 
     def move(self, dt, environment_Xcoordinate, environment_Ycoordinate):
         
@@ -135,14 +135,14 @@ def Visualise(cars, environment):
 
 #---------------------------- Calls -----------------------
 
-Number_of_Cars= 100
+Number_of_Cars= 500
 cars = []
 
 #initialising cars with a random position, velocity and range of sight
 for car in range(Number_of_Cars):
     position = (np.random.rand(2)*2).tolist()
     velocity = ((np.random.rand(2)*2)-1).tolist()
-    range_of_sight = 10
+    range_of_sight = 20
     ID = str(car)
     cars.append(Car(position, velocity, range_of_sight, ID))
 
@@ -150,35 +150,28 @@ London = Environment([0,2], [0,2], 0.25)
 
 for tester in cars:
     London.assign(tester, 0.1)
-    print(tester.ID, tester.neighbors)
+    #print(tester.ID, tester.neighbors)
     
 
 #print('Grid', London.grid)
 
-#G = nx.Graph()
-#G.add_nodes_from(cars)
-#G.add_nodes_from(cars)
-#for node in G.nodes:
-    #print('node position', node.position)
-    #if node.is_in_range_of_sight( location)
-#nx.draw(G)
-#plt.show()  
-
-
 #-------------Aida Proof of Location Protocol-----------------
 #A Car claims their position
 #WARNING: CANNOT PICK 1ST CAR, that is in essence the genesis block so it will never have neighbours
-Car_5 = cars[5]
+Car_301 = cars[301]
 
-position_claim = Car_5.claim_position()
-print('Car '+Car_5.ID +' claims position:',position_claim)
+position_claim = Car_301.claim_position()
+print('Car '+Car_301.ID +' claims position:',position_claim)
 Visualise(cars, London)
 
 #Car 1 names two witnesses
-named_witnesses = Car_5.name_witness()
-print('Car'+Car_5.ID+'names witnesses:', named_witnesses)
+named_witnesses = Car_301.name_witness()
+print('Car'+Car_301.ID+'names witnesses:', named_witnesses)
 
 # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
+for witness in named_witnesses:
+    #witness.is_car_a_neighbour(Car_301)
+    print(witness.is_in_range_of_sight(Car_301.position))
 
 # If previous is True: 
 
@@ -189,3 +182,11 @@ print('Car'+Car_5.ID+'names witnesses:', named_witnesses)
 #If all True: Car 1 can submit position.
 
 #TODO make a graph for the positions that get approved. 
+#G = nx.Graph()
+#G.add_nodes_from(cars)
+#G.add_nodes_from(cars)
+#for node in G.nodes:
+    #print('node position', node.position)
+    #if node.is_in_range_of_sight( location)
+#nx.draw(G)
+#plt.show()  
