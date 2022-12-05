@@ -17,6 +17,7 @@ class Car():
 
         self.neighbors = []
         self.ID = ID
+        self.neighbor_validations = 0
 
     @property
     def range_of_sight(self):
@@ -42,8 +43,7 @@ class Car():
             return False
 
     def add_neighbours(self, car):
-        if self.is_in_range_of_sight(car.position):
-            self.neighbors.append(car)
+        self.neighbors.append(car)
         return self.neighbors
 
     def is_car_a_neighbour(self, car):
@@ -121,12 +121,12 @@ def Visualise(cars, environment):
 
 Number_of_Cars= 500
 cars = []
-#spare scenarios still have situations where a witness has the same attestor for example
+
 #initialising cars with a random position, velocity and range of sight
 for car in range(Number_of_Cars):
     position = (np.random.rand(2)*2).tolist()
     velocity = ((np.random.rand(2)*2)-1).tolist()
-    range_of_sight = 20
+    range_of_sight = round(random.uniform(0.1,0.2), 2)
     ID = str(car)
     cars.append(Car(position, velocity, range_of_sight, ID))
 
@@ -150,108 +150,50 @@ for square in London.grid:
         for car_ in set:
             for nearby_car in set:
                 if car_ != nearby_car: #make sure car does not add itself to the list of neighbours
-                    car_.add_neighbours(nearby_car)
+                    car_.add_neighbours(nearby_car) #the size of neighbours is equal to the number of cars in that grid - 1
 
-Visualise(cars, London)
+
 #-------------Aida Proof of Location Protocol-----------------
-
+#A Car claims their position
+#WARNING: CANNOT PICK 1ST CAR, that is in essence the genesis block so it will never have neighbours
 DAG = nx.Graph()
-for car in cars:
+threshold = 0.5
+valid_nodes = []
+for a_car in cars:
 
-    test_car = car
-    #A Car claims their position
+    test_car = a_car
     position_claim = test_car.claim_position()
     print('Car '+test_car.ID +' claims position:',position_claim)
-    DAG.add_node(test_car, color = 'red')
-    #Visualise(cars, London)
+    print('CAR range of sight is', test_car.range_of_sight)
+    print('number of neighbours: ', len(test_car.neighbors))
+    #Visualise(cars, London)  
 
-    #Car 1 names two witnesses
-    named_witnesses = test_car.name_witness()
-    print('Car'+test_car.ID+'names witnesses:', named_witnesses)
+    for neighbor in test_car.neighbors:
+        #print('is the car a neighbour? ',neighbor.is_car_a_neighbour(test_car))
+        #print('neighbor ID',neighbor.ID)
+        #print('neighbour range of sight is', neighbor.range_of_sight)
+        #print(neighbor.is_in_range_of_sight(test_car.position))
 
-    #check that the witness named is not the car
-    if named_witnesses[0] == test_car or named_witnesses[1] == test_car:
-        print('car named itself as a witness')
-        named_witnesses = test_car.name_witness()
-        print('Car'+test_car.ID+'names new witnesses:', named_witnesses)
+        if test_car.is_in_range_of_sight(neighbor.position):
+            #print('test car validations', test_car.neighbor_validations)
+            test_car.neighbor_validations += 1
 
-    #check that car doesn't select same witness twice
-    if named_witnesses[0] == named_witnesses[1]:
-        print('car is sharing witnesses')
-        named_witnesses = test_car.name_witness()
-        print('Car'+test_car.ID+'names new witnesses:', named_witnesses)
 
-    # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
-    for witness in named_witnesses:
-        print('is witness a neighbour? ',witness.is_car_a_neighbour(test_car))
-        print('witness ID',witness.ID)
-        print(witness.is_in_range_of_sight(test_car.position))
+    score = test_car.neighbor_validations/len(test_car.neighbors)
+    print('score =', score)
+    if score >= threshold:
+        valid_nodes.append(test_car)
 
-        if witness.is_car_a_neighbour(test_car) == False or witness.is_in_range_of_sight(test_car.position) == False:
-            raise Exception('tut tut tuttt.... Nooooo cheating!!!')
-        else:
-            DAG.add_node(witness, color = 'blue')
-        DAG.add_edge(test_car, witness)
+for any_Car in valid_nodes:
+    for neighbour_of_CAR in any_Car.neighbors:
+        if neighbour_of_CAR in valid_nodes:
+            DAG.add_node(any_Car)
+            DAG.add_node(neighbour_of_CAR)
+            DAG.add_edge(any_Car, neighbour_of_CAR)
 
-        # Witness 1 must name their attestors and Witness 2 must name their attestors
-        witness_attestors = witness.name_witness()
-        print('witness '+ str(witness.ID) + ' names attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+nx.draw(DAG)
+plt.show()
 
-        #check that the witness named is not the car
-        if witness_attestors[0] == test_car or witness_attestors[1] == test_car:
-            print('witness named car as an attestor')
-            witness_attestors = witness.name_witness()
-            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
-
-        #check that witness doesn't select same attestor twice
-        if witness_attestors[0] == witness_attestors[1]:
-            print('witness is sharing attestors')
-            witness_attestors = witness.name_witness()
-            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
-
-        #check attestor 1 is not already a witness
-        if witness_attestors[0] == named_witnesses[0] or witness_attestors[0] == named_witnesses[1]:
-            print('attestor 1 is the same as a witness')
-            witness_attestors = witness.name_witness()
-            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
-
-        #check attestor 2 is not already a witness
-        if witness_attestors[1] == named_witnesses[0] or witness_attestors[1] == named_witnesses[1]:
-            print('attestor 2 is the same as witness')
-            witness_attestors = witness.name_witness()
-            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
-
-        # Attestors must be a neighbour AND be in range of sight of witness
-        for attestor in witness_attestors:
-            print('is attestor a neighbour of the witness? ',attestor.is_car_a_neighbour(witness))
-            print('attestor ID',attestor.ID)
-            print(attestor.is_in_range_of_sight(witness.position))
-
-        if attestor.is_car_a_neighbour(witness) == False or attestor.is_in_range_of_sight(witness.position) == False:
-            raise Exception('tut tut tuttt.... Nooooo cheating!!!')
-        else:
-            DAG.add_node(attestor, color = 'green') 
-        DAG.add_edge(witness, attestor)
-        
-        #If all True: attestors' positions get verified
-
-#TODO: what happens if the conditions above are met but there is no other option?
-
-    color_map = nx.get_node_attributes(DAG, 'color')
-    #some ugly code i copied from stack overflow to change the color of each node, 
-    # probably will do this better later
-    for key in color_map:
-        if color_map[key] == 'green':
-            color_map[key] = 'green'
-        if color_map[key] == 'blue':
-            color_map[key] = 'blue'
-        if color_map[key] == 'red':
-            color_map[key] = 'red'
-    car_colors = [color_map.get(node) for node in DAG.nodes()]
-
-nx.draw(DAG, node_color=car_colors)
-#print('no. of nodes: ',DAG.number_of_nodes())
-plt.show()  
-
+print('no. of nodes: ',DAG.number_of_nodes())
 
 
