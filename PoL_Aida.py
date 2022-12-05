@@ -169,6 +169,18 @@ for car in cars:
     named_witnesses = test_car.name_witness()
     print('Car'+test_car.ID+'names witnesses:', named_witnesses)
 
+    #check that the witness named is not the car
+    if named_witnesses[0] == test_car or named_witnesses[1] == test_car:
+        print('car named itself as a witness')
+        named_witnesses = test_car.name_witness()
+        print('Car'+test_car.ID+'names new witnesses:', named_witnesses)
+
+    #check that car doesn't select same witness twice
+    if named_witnesses[0] == named_witnesses[1]:
+        print('car is sharing witnesses')
+        named_witnesses = test_car.name_witness()
+        print('Car'+test_car.ID+'names new witnesses:', named_witnesses)
+
     # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
     for witness in named_witnesses:
         print('is witness a neighbour? ',witness.is_car_a_neighbour(test_car))
@@ -184,6 +196,30 @@ for car in cars:
         # Witness 1 must name their attestors and Witness 2 must name their attestors
         witness_attestors = witness.name_witness()
         print('witness '+ str(witness.ID) + ' names attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+
+        #check that the witness named is not the car
+        if witness_attestors[0] == test_car or witness_attestors[1] == test_car:
+            print('witness named car as an attestor')
+            witness_attestors = witness.name_witness()
+            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+
+        #check that witness doesn't select same attestor twice
+        if witness_attestors[0] == witness_attestors[1]:
+            print('witness is sharing attestors')
+            witness_attestors = witness.name_witness()
+            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+
+        #check attestor 1 is not already a witness
+        if witness_attestors[0] == named_witnesses[0] or witness_attestors[0] == named_witnesses[1]:
+            print('attestor 1 is the same as a witness')
+            witness_attestors = witness.name_witness()
+            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+
+        #check attestor 2 is not already a witness
+        if witness_attestors[1] == named_witnesses[0] or witness_attestors[1] == named_witnesses[1]:
+            print('attestor 2 is the same as witness')
+            witness_attestors = witness.name_witness()
+            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
 
         # Attestors must be a neighbour AND be in range of sight of witness
         for attestor in witness_attestors:
@@ -215,8 +251,5 @@ for car in cars:
     nx.draw(DAG, node_color=car_colors)
 plt.show()  
 
-#TODO: add condition to forbid cross referencing 
-# pls work
 
-    
 
