@@ -60,6 +60,9 @@ class Car():
             raise Exception("The car is not a neighbour!") 
 
     def claim_position(self):
+        if self.honest == False:
+            return self.ID, self.fake_position
+        else:
             return self.ID, self.position
 
     def name_witness(self):
@@ -126,7 +129,7 @@ def Visualise(cars, environment):
 
 #---------------------------- Calls -----------------------
 
-Number_of_Cars= 500
+Number_of_Cars= 1000
 cars = []
 
 #initialising cars with a random position, velocity and range of sight
@@ -135,7 +138,7 @@ for car in range(Number_of_Cars):
     velocity = ((np.random.rand(2)*2)-1).tolist()
     range_of_sight = 20
     ID = str(car)
-    honest = True
+    honest = random.choice([True, False])
     cars.append(Car(position, velocity, range_of_sight, ID, honest))
 
 London = Environment([0,2], [0,2], 0.25)
@@ -165,12 +168,18 @@ Visualise(cars, London)
 #-----------------------------Aida Proof of Location Protocol---------------------------
 
 DAG = nx.Graph()
+
+True_Positive = 0
+True_Negative = 0
+False_Positive = 0
+False_Negative = 0
+
 for car in cars:
     test_car = car
-    test_car.algorithm_honesty_output = False
+
     #A Car claims their position
     position_claim = test_car.claim_position()
-    print('Car '+test_car.ID +' claims position:',position_claim)
+    print('Car '+test_car.ID +' claims position:', position_claim)
     DAG.add_node(test_car, color = 'red')
 
     #Car 1 names two witnesses
@@ -191,7 +200,7 @@ for car in cars:
 
     # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
     for witness in named_witnesses:
-        print('is witness a neighbour? ',witness.is_car_a_neighbour(test_car))
+        print('is witness a neighbour? ', witness.is_car_a_neighbour(test_car))
         print('witness ID',witness.ID)
         print(witness.is_in_range_of_sight(test_car.position))
 
@@ -248,6 +257,17 @@ for car in cars:
         print('Is this car actually honest?: ' + str(test_car.honest) + ' Does the algorithm think this car is honest?: ' + str(test_car.algorithm_honesty_output))
         #If all True: attestors' positions get verified
 
+        if test_car.honest and test_car.algorithm_honesty_output == True:
+            True_Positive += 1
+        if test_car.honest == True and test_car.algorithm_honesty_output == False:
+            False_Negative += 1
+        if test_car.honest == False and test_car.algorithm_honesty_output == True:
+            False_Positive += 1
+        if test_car.honest == False and test_car.algorithm_honesty_output == False:
+            True_Negative += 1
+    
+    Accuracy = ((True_Positive + True_Negative) / (True_Positive + True_Negative + False_Positive + False_Negative)) * 100
+
     color_map = nx.get_node_attributes(DAG, 'color')
 
     #some code i copied from stack overflow to change the color of each node, 
@@ -259,8 +279,11 @@ for car in cars:
             color_map[key] = 'blue'
         if color_map[key] == 'red':
             color_map[key] = 'red'
+        if color_map[key] == 'magenta':
+            color_map[key] = 'magenta'
     car_colors = [color_map.get(node) for node in DAG.nodes()]
 
+print('total accuracy = ' + str(Accuracy) + '%')
 nx.draw(DAG, node_color=car_colors)
 #print('no. of nodes: ',DAG.number_of_nodes())
 plt.show()  
