@@ -167,7 +167,7 @@ Visualise(cars, London)
 DAG = nx.Graph()
 for car in cars:
     test_car = car
-    test_car.algorithm_honesty_output == False
+    test_car.algorithm_honesty_output = False
     #A Car claims their position
     position_claim = test_car.claim_position()
     print('Car '+test_car.ID +' claims position:',position_claim)
@@ -196,11 +196,11 @@ for car in cars:
         print(witness.is_in_range_of_sight(test_car.position))
 
         if witness.is_car_a_neighbour(test_car) == False or witness.is_in_range_of_sight(test_car.position) == False:
-            test_car.algorithm_honesty_output == False
+            test_car.algorithm_honesty_output = False
             raise Exception('tut tut tuttt.... Nooooo cheating!!!')
         else:
             DAG.add_node(witness, color = 'blue')
-            test_car.algorithm_honesty_output == True
+            test_car.algorithm_honesty_output = True
         DAG.add_edge(test_car, witness)
 
         # Witness 1 must name their attestors and Witness 2 must name their attestors
@@ -238,12 +238,12 @@ for car in cars:
             print(attestor.is_in_range_of_sight(witness.position))
 
         if attestor.is_car_a_neighbour(witness) == False or attestor.is_in_range_of_sight(witness.position) == False:
-            test_car.algorithm_honesty_output == False
+            test_car.algorithm_honesty_output = False
             raise Exception('tut tut tuttt.... Nooooo cheating!!!')
 
         else:
             DAG.add_node(attestor, color = 'green')
-            test_car.algorithm_honesty_output == True
+            test_car.algorithm_honesty_output = True
         DAG.add_edge(witness, attestor)
         print('Is this car actually honest?: ' + str(test_car.honest) + ' Does the algorithm think this car is honest?: ' + str(test_car.algorithm_honesty_output))
         #If all True: attestors' positions get verified
