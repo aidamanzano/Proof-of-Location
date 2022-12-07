@@ -6,9 +6,9 @@ import networkx as nx
 # https://github.com/pyg-team/pytorch_geometric/issues/4378 
 
 class Car():
-    """class to create a car with a given position, range of sight and list of neighbors"""
+    """class to create a car with a given position, range of sight and list of neighbors. Car is assumed to be honest"""
     
-    def __init__(self, position: list, velocity: list, range_of_sight: float, ID):
+    def __init__(self, position: list, velocity: list, range_of_sight: float, ID, honest: True):
         self.position = np.array(position)
         self.velocity = np.array(velocity)
         self.position_history = []
@@ -17,6 +17,9 @@ class Car():
 
         self.neighbors = []
         self.ID = ID
+        self.honest = honest #is the car honest or a liar
+        self.algorithm_honesty_output = None #does the algorithm dictate that this car is honest or a liar
+        self.fake_position = None
 
     @property
     def range_of_sight(self):
@@ -29,6 +32,10 @@ class Car():
             return ValueError("Your car must be able to see something")
         self._range_of_sight = value
     
+    #if the car is malicious, we assign it a fake position
+    def fake_position(self):
+        if self.honest == False:
+            self.fake_position = (np.random.rand(2)*2).tolist()
 
     def is_in_range_of_sight(self, location):
         """This is a check to see if the position of a car that is being 'viewed' is within the range of sight of the viewing car.
@@ -121,14 +128,15 @@ def Visualise(cars, environment):
 
 Number_of_Cars= 500
 cars = []
-#spare scenarios still have situations where a witness has the same attestor for example
+
 #initialising cars with a random position, velocity and range of sight
 for car in range(Number_of_Cars):
     position = (np.random.rand(2)*2).tolist()
     velocity = ((np.random.rand(2)*2)-1).tolist()
     range_of_sight = 20
     ID = str(car)
-    cars.append(Car(position, velocity, range_of_sight, ID))
+    honest = True
+    cars.append(Car(position, velocity, range_of_sight, ID, honest))
 
 London = Environment([0,2], [0,2], 0.25)
 #put all the cars into the Environment for the first time
@@ -153,23 +161,23 @@ for square in London.grid:
                     car_.add_neighbours(nearby_car)
 
 Visualise(cars, London)
-#-------------Aida Proof of Location Protocol-----------------
+
+#-----------------------------Aida Proof of Location Protocol---------------------------
 
 DAG = nx.Graph()
 for car in cars:
-
     test_car = car
+    test_car.algorithm_honesty_output == False
     #A Car claims their position
     position_claim = test_car.claim_position()
     print('Car '+test_car.ID +' claims position:',position_claim)
     DAG.add_node(test_car, color = 'red')
-    #Visualise(cars, London)
 
     #Car 1 names two witnesses
     named_witnesses = test_car.name_witness()
     print('Car'+test_car.ID+'names witnesses:', named_witnesses)
 
-    #check that the witness named is not the car
+    #check that the witness named is not the car itself
     if named_witnesses[0] == test_car or named_witnesses[1] == test_car:
         print('car named itself as a witness')
         named_witnesses = test_car.name_witness()
@@ -188,9 +196,11 @@ for car in cars:
         print(witness.is_in_range_of_sight(test_car.position))
 
         if witness.is_car_a_neighbour(test_car) == False or witness.is_in_range_of_sight(test_car.position) == False:
+            test_car.algorithm_honesty_output == False
             raise Exception('tut tut tuttt.... Nooooo cheating!!!')
         else:
             DAG.add_node(witness, color = 'blue')
+            test_car.algorithm_honesty_output == True
         DAG.add_edge(test_car, witness)
 
         # Witness 1 must name their attestors and Witness 2 must name their attestors
@@ -228,17 +238,19 @@ for car in cars:
             print(attestor.is_in_range_of_sight(witness.position))
 
         if attestor.is_car_a_neighbour(witness) == False or attestor.is_in_range_of_sight(witness.position) == False:
+            test_car.algorithm_honesty_output == False
             raise Exception('tut tut tuttt.... Nooooo cheating!!!')
+
         else:
-            DAG.add_node(attestor, color = 'green') 
+            DAG.add_node(attestor, color = 'green')
+            test_car.algorithm_honesty_output == True
         DAG.add_edge(witness, attestor)
-        
+        print('Is this car actually honest?: ' + str(test_car.honest) + ' Does the algorithm think this car is honest?: ' + str(test_car.algorithm_honesty_output))
         #If all True: attestors' positions get verified
 
-#TODO: what happens if the conditions above are met but there is no other option?
-
     color_map = nx.get_node_attributes(DAG, 'color')
-    #some ugly code i copied from stack overflow to change the color of each node, 
+
+    #some code i copied from stack overflow to change the color of each node, 
     # probably will do this better later
     for key in color_map:
         if color_map[key] == 'green':
