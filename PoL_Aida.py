@@ -63,6 +63,7 @@ class Car():
 
     def claim_position(self):
         if self.honest == False:
+            print('this car is a lying car', ' its real position is: ', self.position, ' its fake position is: ', self.fake_position)
             return self.ID, self.fake_position
         else:
             return self.ID, self.position
@@ -70,12 +71,14 @@ class Car():
     def name_witness(self):
         #select two witnesses at random from list of neighbours
         #TODO: if the car is lying, it must name neighbours from its fake position, not its real one!
-        if len(self.neighbors) > 1:
+        if len(self.neighbors) >= 2:
             self.witnesses = random.choices(self.neighbors, k = 2)
+            return self.witnesses
         else:
+            #self.witnesses = self.neighbors
             print("The car does not have sufficient neighbours to witness its position!")
-        return self.witnesses
-
+            return None
+        
     def move(self, dt, environment_Xcoordinates, environment_Ycoordinates):
         
         preliminary_position = self.position + (dt * self.velocity) 
@@ -132,14 +135,14 @@ def Visualise(cars, environment):
 
 #---------------------------- Calls -----------------------
 
-Number_of_Cars= 1000
+Number_of_Cars= 500
 cars = []
 
 #initialising cars with a random position, velocity and range of sight
 for car in range(Number_of_Cars):
     position = (np.random.rand(2)*2).tolist()
     velocity = ((np.random.rand(2)*2)-1).tolist()
-    range_of_sight = 100000
+    range_of_sight = round(random.uniform(0.1,0.2), 2)
     ID = str(car)
     honest = random.choice([True, False])
     cars.append(Car(position, velocity, range_of_sight, ID, honest))
@@ -192,6 +195,8 @@ False_Negative = 0
 for car in cars:
     test_car = car
 
+    test_car.algorithm_honesty_output = True
+    
     #A Car claims their position
     position_claim = test_car.claim_position()
     print('Car '+test_car.ID +' claims position:', position_claim)
@@ -199,76 +204,86 @@ for car in cars:
 
     #Car 1 names two witnesses
     named_witnesses = test_car.name_witness()
-    print('Car'+test_car.ID+'names witnesses:', named_witnesses)
+    if named_witnesses == None:
+        #test_car.algorithm_honesty_output = False
+        pass
 
-    #check that the witness named is not the car itself
-    if named_witnesses[0] == test_car or named_witnesses[1] == test_car:
-        print('car named itself as a witness')
-        named_witnesses = test_car.name_witness()
-        print('Car'+test_car.ID+'names new witnesses:', named_witnesses)
+    else:
+        print('Car'+test_car.ID+'names witnesses:', named_witnesses)
 
-    #check that car doesn't select same witness twice
-    if named_witnesses[0] == named_witnesses[1]:
-        print('car is sharing witnesses')
-        named_witnesses = test_car.name_witness()
-        print('Car'+test_car.ID+'names new witnesses:', named_witnesses)
+        #check that the witness named is not the car itself
+        if named_witnesses[0] == test_car or named_witnesses[1] == test_car:
+            print('car named itself as a witness')
+            named_witnesses = test_car.name_witness()
+            print('Car'+test_car.ID+'names new witnesses:', named_witnesses)
 
-    # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
-    for witness in named_witnesses:
-        print('is witness a neighbour? ', witness.is_car_a_neighbour(test_car))
-        print('witness ID',witness.ID)
-        print(witness.is_in_range_of_sight(test_car.position))
+        #check that car doesn't select same witness twice
+        if named_witnesses[0] == named_witnesses[1]:
+            print('car is sharing witnesses')
+            named_witnesses = test_car.name_witness()
+            print('Car'+test_car.ID+'names new witnesses:', named_witnesses)
 
-        if witness.is_car_a_neighbour(test_car) == False or witness.is_in_range_of_sight(test_car.position) == False:
-            test_car.algorithm_honesty_output = False
-            print('witness is not neighbour of car OR witness is not in range of sight of car')
-        else:
-            DAG.add_node(witness, color = 'blue')
-            test_car.algorithm_honesty_output = True
-        DAG.add_edge(test_car, witness)
+        # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
+        for witness in named_witnesses:
+            print('is witness a neighbour? ', witness.is_car_a_neighbour(test_car))
+            print('witness ID',witness.ID)
+            print(witness.is_in_range_of_sight(test_car.position))
 
-        # Witness 1 must name their attestors and Witness 2 must name their attestors
-        witness_attestors = witness.name_witness()
-        print('witness '+ str(witness.ID) + ' names attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+            if witness.is_car_a_neighbour(test_car) == False or witness.is_in_range_of_sight(test_car.position) == False:
+                test_car.algorithm_honesty_output = False
+                print('witness is not neighbour of car OR witness is not in range of sight of car')
+                
+            else:
+                DAG.add_node(witness, color = 'blue')
 
-        #check that the witness named is not the car
-        if witness_attestors[0] == test_car or witness_attestors[1] == test_car:
-            print('witness named car as an attestor')
+            DAG.add_edge(test_car, witness)
+
+            # Witness 1 must name their attestors and Witness 2 must name their attestors
             witness_attestors = witness.name_witness()
-            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+            if witness_attestors == None:
+                pass
+            else:
+                print('witness '+ str(witness.ID) + ' names attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
 
-        #check that witness doesn't select same attestor twice
-        if witness_attestors[0] == witness_attestors[1]:
-            print('witness is sharing attestors')
-            witness_attestors = witness.name_witness()
-            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+                #check that the witness named is not the car
+                if witness_attestors[0] == test_car or witness_attestors[1] == test_car:
+                    print('witness named car as an attestor')
+                    witness_attestors = witness.name_witness()
+                    print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
 
-        #check attestor 1 is not already a witness
-        if witness_attestors[0] == named_witnesses[0] or witness_attestors[0] == named_witnesses[1]:
-            print('attestor 1 is the same as a witness')
-            witness_attestors = witness.name_witness()
-            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+                #check that witness doesn't select same attestor twice
+                if witness_attestors[0] == witness_attestors[1]:
+                    print('witness is sharing attestors')
+                    witness_attestors = witness.name_witness()
+                    print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
 
-        #check attestor 2 is not already a witness
-        if witness_attestors[1] == named_witnesses[0] or witness_attestors[1] == named_witnesses[1]:
-            print('attestor 2 is the same as witness')
-            witness_attestors = witness.name_witness()
-            print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+                #check attestor 1 is not already a witness
+                if witness_attestors[0] == named_witnesses[0] or witness_attestors[0] == named_witnesses[1]:
+                    print('attestor 1 is the same as a witness')
+                    witness_attestors = witness.name_witness()
+                    print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
 
-        # Attestors must be a neighbour AND be in range of sight of witness
-        for attestor in witness_attestors:
-            print('is attestor a neighbour of the witness? ',attestor.is_car_a_neighbour(witness))
-            print('attestor ID',attestor.ID)
-            print(attestor.is_in_range_of_sight(witness.position))
+                #check attestor 2 is not already a witness
+                if witness_attestors[1] == named_witnesses[0] or witness_attestors[1] == named_witnesses[1]:
+                    print('attestor 2 is the same as witness')
+                    witness_attestors = witness.name_witness()
+                    print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
 
-        if attestor.is_car_a_neighbour(witness) == False or attestor.is_in_range_of_sight(witness.position) == False:
-            test_car.algorithm_honesty_output = False
-            print('attestor is not a neighbour, OR attestor is not in range of sight of witness')
+                # Attestors must be a neighbour AND be in range of sight of witness
+                for attestor in witness_attestors:
+                    print('is attestor a neighbour of the witness? ',attestor.is_car_a_neighbour(witness))
+                    print('attestor ID',attestor.ID)
+                    print(attestor.is_in_range_of_sight(witness.position))
 
-        else:
-            DAG.add_node(attestor, color = 'green')
-            test_car.algorithm_honesty_output = True
-        DAG.add_edge(witness, attestor)
+                    if attestor.is_car_a_neighbour(witness) == False or attestor.is_in_range_of_sight(witness.position) == False:
+                        test_car.algorithm_honesty_output = False
+                        print('attestor is not a neighbour, OR attestor is not in range of sight of witness')
+
+                    else:
+                        DAG.add_node(attestor, color = 'green')
+                        #test_car.algorithm_honesty_output = True
+
+                    DAG.add_edge(witness, attestor)
         print('Is this car actually honest?: ' + str(test_car.honest) + ' Does the algorithm think this car is honest?: ' + str(test_car.algorithm_honesty_output))
         #If all True: attestors' positions get verified
 
