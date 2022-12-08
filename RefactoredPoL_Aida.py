@@ -113,6 +113,7 @@ class Environment:
         self.grid[x_index][y_index].add(car)
 
 def Visualise(cars, environment):
+
     for car in cars:
         x = car.position[0]
         y = car.position[1]
@@ -120,11 +121,17 @@ def Visualise(cars, environment):
         plt.xlim(environment.x_coordinates[0], environment.x_coordinates[1])
         plt.ylim(environment.y_coordinates[0], environment.y_coordinates[1])
         
-        plt.plot(x, y, marker="o", markersize=10, markerfacecolor="magenta")
+        plt.scatter(x, y, marker="o", cmap='Greens') #TODO: trying to plot lying cars in one color and honest cars in another, but cannot figure out how to
         
     plt.grid()
     plt.show()
+"""         if car.honest == True:
+            x = car.position[0]
+            y = car.position[1]
 
+        else:
+            x = car.fake_position[0]
+            y = car.fake_position[1] """
 
 class lying_car(Car):
     def __init__(self, position: list, velocity: list, range_of_sight: float, ID):
