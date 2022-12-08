@@ -33,9 +33,10 @@ class Car():
         self._range_of_sight = value
     
     #if the car is malicious, we assign it a fake position
-    def fake_position(self):
+    def assign_fake_position(self):
         if self.honest == False:
             self.fake_position = (np.random.rand(2)*2).tolist()
+            return self.fake_position
 
     def is_in_range_of_sight(self, location):
         """This is a check to see if the position of a car that is being 'viewed' is within the range of sight of the viewing car.
@@ -57,7 +58,8 @@ class Car():
         if car in self.neighbors:
             return True
         else:
-            raise Exception("The car is not a neighbour!") 
+            print("The car is not a neighbour!")
+            return False
 
     def claim_position(self):
         if self.honest == False:
@@ -67,10 +69,11 @@ class Car():
 
     def name_witness(self):
         #select two witnesses at random from list of neighbours
+        #TODO: if the car is lying, it must name neighbours from its fake position, not its real one!
         if len(self.neighbors) > 1:
             self.witnesses = random.choices(self.neighbors, k = 2)
         else:
-            raise Exception("The car does not have sufficient neighbours to witness its position!")
+            print("The car does not have sufficient neighbours to witness its position!")
         return self.witnesses
 
     def move(self, dt, environment_Xcoordinates, environment_Ycoordinates):
@@ -136,7 +139,7 @@ cars = []
 for car in range(Number_of_Cars):
     position = (np.random.rand(2)*2).tolist()
     velocity = ((np.random.rand(2)*2)-1).tolist()
-    range_of_sight = 20
+    range_of_sight = 100000
     ID = str(car)
     honest = random.choice([True, False])
     cars.append(Car(position, velocity, range_of_sight, ID, honest))
@@ -159,11 +162,23 @@ for car in cars:
 for square in London.grid:
     for set in square:
         for car_ in set:
+            if car_.honest == False:
+                car_.assign_fake_position()
+                x_index = int(np.floor(car_.fake_position[0]/London.grid_size))
+                y_index = int(np.floor(car_.fake_position[1]/London.grid_size))
+                for alleged_nearby_car in London.grid[x_index][y_index]:
+                    if car_ != alleged_nearby_car:
+                        car_.add_neighbours(alleged_nearby_car)
+                #go to fake position square
+                #for nearby_car in fake position
+                #add the neighbours
             for nearby_car in set:
                 if car_ != nearby_car: #make sure car does not add itself to the list of neighbours
-                    car_.add_neighbours(nearby_car)
+                    car_.add_neighbours(nearby_car) 
 
-Visualise(cars, London)
+#TODO: if the car is lying, it must add neighbours from its fake position, not its real one!
+
+#Visualise(cars, London)
 
 #-----------------------------Aida Proof of Location Protocol---------------------------
 
@@ -206,7 +221,7 @@ for car in cars:
 
         if witness.is_car_a_neighbour(test_car) == False or witness.is_in_range_of_sight(test_car.position) == False:
             test_car.algorithm_honesty_output = False
-            raise Exception('tut tut tuttt.... Nooooo cheating!!!')
+            print('witness is not neighbour of car OR witness is not in range of sight of car')
         else:
             DAG.add_node(witness, color = 'blue')
             test_car.algorithm_honesty_output = True
@@ -248,7 +263,7 @@ for car in cars:
 
         if attestor.is_car_a_neighbour(witness) == False or attestor.is_in_range_of_sight(witness.position) == False:
             test_car.algorithm_honesty_output = False
-            raise Exception('tut tut tuttt.... Nooooo cheating!!!')
+            print('attestor is not a neighbour, OR attestor is not in range of sight of witness')
 
         else:
             DAG.add_node(attestor, color = 'green')
@@ -257,14 +272,14 @@ for car in cars:
         print('Is this car actually honest?: ' + str(test_car.honest) + ' Does the algorithm think this car is honest?: ' + str(test_car.algorithm_honesty_output))
         #If all True: attestors' positions get verified
 
-        if test_car.honest and test_car.algorithm_honesty_output == True:
-            True_Positive += 1
-        if test_car.honest == True and test_car.algorithm_honesty_output == False:
-            False_Negative += 1
-        if test_car.honest == False and test_car.algorithm_honesty_output == True:
-            False_Positive += 1
-        if test_car.honest == False and test_car.algorithm_honesty_output == False:
-            True_Negative += 1
+    if test_car.honest and test_car.algorithm_honesty_output == True:
+        True_Positive += 1
+    if test_car.honest == True and test_car.algorithm_honesty_output == False:
+        False_Negative += 1
+    if test_car.honest == False and test_car.algorithm_honesty_output == True:
+        False_Positive += 1
+    if test_car.honest == False and test_car.algorithm_honesty_output == False:
+        True_Negative += 1
     
     Accuracy = ((True_Positive + True_Negative) / (True_Positive + True_Negative + False_Positive + False_Negative)) * 100
 
@@ -286,7 +301,7 @@ for car in cars:
 print('total accuracy = ' + str(Accuracy) + '%')
 nx.draw(DAG, node_color=car_colors)
 #print('no. of nodes: ',DAG.number_of_nodes())
-plt.show()  
+#plt.show()  
 
 
 
