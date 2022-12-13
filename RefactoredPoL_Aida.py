@@ -43,7 +43,7 @@ class Car():
             return False
 
     def add_neighbours(self, city):
-        x_index, y_index = self.get_position_indicies(city.grid_size)
+        x_index, y_index = self.get_position_indicies(city.grid_size) #TODO: check if the indicies are correct: they are correct
         for car in city.grid[x_index][y_index]:
         #for an honest car we only add neighbours that are within the range of sight of its position
             if self.is_in_range_of_sight(car.position) and car.ID != self.ID:
@@ -54,7 +54,7 @@ class Car():
         if car in self.neighbours:
             return True
         else:
-            #print("The car is not a neighbour!")
+            print("The car is not a neighbour!")
             return False
 
     def claim_position(self):
@@ -66,28 +66,34 @@ class Car():
             self.witnesses = random.sample(self.neighbours, 2)
             return self.witnesses
         else:
-            #print("The car does not have sufficient neighbours to witness its position!")
+            print("The car does not have sufficient neighbours to witness its position!")
             return None
             #Even if a car has exactly one neighbour, I will ignore because it is not enough to proceed in the protocol.
             #do bla bla bla if witnesses != None else pass
         
-    def move(self, dt, environment_Xcoordinates, environment_Ycoordinates):
+    def move(self, dt, environment):
+        x_index, y_index = self.get_position_indicies(environment.grid_size)
+        #TODO: REMOVE the car from previous position
+        environment.grid[x_index][y_index].remove(car)
         
         preliminary_position = self.position + (dt * self.velocity) 
         #if the agent is getting close to the grid boundaries, invert the velocity
         #I am assuming no car would voluntarily drive towards a wall
 
-        if preliminary_position[0] <= environment_Xcoordinates[0] or preliminary_position[0] >= environment_Xcoordinates[1]:
+        if preliminary_position[0] <= environment.x_coordinates[0] or preliminary_position[0] >= environment.x_coordinates[1]:
             
             self.velocity[0] = -1 * self.velocity[0]
             preliminary_position = self.position + (dt * self.velocity)
             
-        if preliminary_position[1] <= environment_Ycoordinates[0] or preliminary_position[1] >= environment_Ycoordinates[1]:
+        if preliminary_position[1] <= environment.y_coordinates[0] or preliminary_position[1] >= environment.y_coordinates[1]:
             self.velocity[1] = -1 * self.velocity[1]
             preliminary_position = self.position + (dt * self.velocity)
         
         self.position = preliminary_position
         self.position_history.append(self.position)
+
+        #TODO: Assign the car in its new position
+        environment.assign(car)
 
     def get_position_indicies(self, grid_size):
         x_index = int(np.floor(self.position[0]/grid_size))
@@ -175,7 +181,7 @@ cars = []
 for car in range(Number_of_honest_cars):
     position = (np.random.rand(2)*2).tolist()
     velocity = ((np.random.rand(2)*2)-1).tolist()
-    range_of_sight = round(random.uniform(0.1,0.2), 100)
+    range_of_sight = 1000
     ID = str(car)
     cars.append(Car(position, velocity, range_of_sight, ID))
 
@@ -183,7 +189,8 @@ for car in range(Number_of_honest_cars):
 for liar_car in range(Number_of_lying_cars):
     position = (np.random.rand(2)*2).tolist()
     velocity = ((np.random.rand(2)*2)-1).tolist()
-    range_of_sight = round(random.uniform(0.1,0.2), 100)
+    #range_of_sight = round(random.uniform(0.1,0.2), 100)
+    range_of_sight = 1000
     ID = str(liar_car)
     cars.append(lying_car(position, velocity, range_of_sight, ID))
 
@@ -198,18 +205,25 @@ London = Environment([0,2], [0,2], 0.25)
 for car in cars:
     #put all the cars into the Environment for the first time
     London.assign(car)
+    print(car.get_position_indicies(London.grid_size), car.position)
 
-for car in cars:
+
+""" for car in cars:
     #Move all the honest cars' position in the environment
     if car.honest is True:
         car.move(0.1, London.x_coordinates, London.y_coordinates)
-        
+
     else:
         #if the car is lying, we move its fake position
         car.move_fake_position(0.1, London.x_coordinates, London.y_coordinates)
-        #TODO: do we also want to move its real position?
         #car.move(0.1, London.x_coordinates, London.y_coordinates)
-    London.assign(car)
+        # we also want to move its real position """
+for car in cars:
+    car.move(0.1, London)
+    car.neighbours = set()
+    print(car.get_position_indicies(London.grid_size), car.position)
+
+
 
 for car in cars:
     car.add_neighbours(London)
@@ -239,22 +253,18 @@ for car in cars:
 
     if named_witnesses is None:
         car.algorithm_honesty_output = False
+        pass
         
 
     else:
         print('Car'+ car.ID +'names witnesses:', named_witnesses[0].ID, named_witnesses[1].ID)
         
-        #check that the witness named is not the car itself (superfluous anyway)
-        if named_witnesses[0] == car or named_witnesses[1] == car:
-            print('car named itself as a witness')
-            named_witnesses = car.name_witness()
-            #print('Car'+car.ID+'names new witnesses:', named_witnesses[0].ID, named_witnesses[1].ID)
-
-        #check that car doesn't select same witness twice
-        if named_witnesses[0] == named_witnesses[1]:
-            print('car is sharing witnesses')
-            named_witnesses = car.name_witness()
-            #print('Car'+car.ID+'names new witnesses:', named_witnesses[0].ID, named_witnesses[1].ID)
+        #check that the witness named is not the car itself (superfluous anyway) # AND check that car doesn't select same witness twice
+        tries = 5
+        for trial in range(tries):
+            named_witnesses = car.name_witness()    
+            if (named_witnesses[0] != car and named_witnesses[1] != car) and (named_witnesses[0] != named_witnesses[1]):
+                break
 
         # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
         for witness in named_witnesses:
@@ -262,9 +272,13 @@ for car in cars:
             #print('witness ID',witness.ID)
             #print(witness.is_in_range_of_sight(car.position))
 
-            if witness.is_car_a_neighbour(car) is False or witness.is_in_range_of_sight(car.position) is False:
+            if witness.is_car_a_neighbour(car) is False:
                 car.algorithm_honesty_output = False
-                print('witness is not neighbour of car OR witness is not in range of sight of car')
+                print('car is not a neighbour of the witness')
+                break
+            elif witness.is_in_range_of_sight(car.position) is False:
+                car.algorithm_honesty_output = False
+                print('car is not in range of sight of witness')
                 break
             else:
                 DAG.add_node(witness, color = 'blue')
@@ -277,33 +291,27 @@ for car in cars:
             witness_attestors = witness.name_witness()
             if witness_attestors is None:
                 car.algorithm_honesty_output = False
+                print('witness is not in range of sight of car')
                 break
             else:
-                #print('witness '+ str(witness.ID) + ' names attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+                print('witness '+ str(witness.ID) + ' names attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
 
                 #check that the attestor named is not the car
-                while witness_attestors[0] == car or witness_attestors[1] == car:
-                    #print('witness named car as an attestor')
+                tries = 5
+                for trial in range(tries):
                     witness_attestors = witness.name_witness()
-                    #print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+                    if (witness_attestors[0] != car and witness_attestors[1] != car) and (witness_attestors[0] != witness_attestors[1]) and (witness_attestors[0] != named_witnesses[0] and witness_attestors[0] != named_witnesses[1]) and (witness_attestors[1] != named_witnesses[0] and witness_attestors[1] != named_witnesses[1]):
+                        break
+
 
                 #check that witness doesn't select same attestor twice
-                while witness_attestors[0] == witness_attestors[1]:
-                    #print('witness is sharing attestors')
-                    witness_attestors = witness.name_witness()
-                    #print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+                
 
                 #check attestor 1 is not already a witness
-                while witness_attestors[0] == named_witnesses[0] or witness_attestors[0] == named_witnesses[1]:
-                    #print('attestor 1 is the same as a witness')
-                    witness_attestors = witness.name_witness()
-                    #print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+                
 
                 #check attestor 2 is not already a witness
-                while witness_attestors[1] == named_witnesses[0] or witness_attestors[1] == named_witnesses[1]:
-                    #print('attestor 2 is the same as witness')
-                    witness_attestors = witness.name_witness()
-                    #print('witness '+ str(witness.ID) + ' names new attestors: ', witness_attestors[0].ID, witness_attestors[1].ID)
+                
 
                 # Attestors must be a neighbour AND be in range of sight of witness
                 for attestor in witness_attestors:
@@ -311,10 +319,14 @@ for car in cars:
                     #print('attestor ID',attestor.ID)
                     #print(attestor.is_in_range_of_sight(witness.position))
 
-                    if attestor.is_car_a_neighbour(witness) is False or attestor.is_in_range_of_sight(witness.position) is False:
+                    if attestor.is_car_a_neighbour(witness) is False:
                         car.algorithm_honesty_output = False
+                        print('witness is not a neighbour of the attestor')
                         break
-                        #print('attestor is not a neighbour, OR attestor is not in range of sight of witness')
+                    elif attestor.is_in_range_of_sight(witness.position) is False:
+                        car.algorithm_honesty_output = False
+                        print('witness position is not in range of sight of attestor')
+                        break
 
                     else:
                         car.algorithm_honesty_output = True
