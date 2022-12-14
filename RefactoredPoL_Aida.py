@@ -18,6 +18,7 @@ class Car():
         self.ID = ID
         self.honest = True #is the car honest or a liar
         self.algorithm_honesty_output = None #does the algorithm dictate that this car is honest or a liar
+        self.coerced = False
 
 
     @property
@@ -45,7 +46,13 @@ class Car():
     def add_neighbours(self, city):
         """Find the grid quadrant of the car. Then, for every other neighbouring car in that quadrant, if it is in the range of sight 
         and not the car itself, add it to the set of neighbours"""
-        x_index, y_index = self.get_position_indicies(city.grid_size) #TODO: check if the indicies are correct: they are correct
+        x_index, y_index = self.get_position_indicies(city.grid_size)
+        #coerced will chose to add a lying car it does NOT see in the fake position grid
+        if self.coerced is True:
+            for car in city.grid[x_index][y_index]:
+                if car.honest is False and self.ID != car.ID:
+                    self.neighbours.add(car)
+
         for car in city.grid[x_index][y_index]:
             #if neighbouring car is a lying car, the honest car would not see it, because it is in a fake position
 
@@ -193,14 +200,6 @@ class lying_car(Car):
             if self.is_in_range_of_sight(alleged_nearby_car.position) and alleged_nearby_car.ID != self.ID:
                 self.neighbours.add(alleged_nearby_car)
         return self.neighbours
-
-#TODO: coerced (honest) car may also chose to add a lying car it does NOT see in the fake position grid
-
-""" if car coerced:
-    for every other car in its grid square:
-        if car is false:
-            if its fake position is in the same square:
-                add it to neighbours """
 
 Number_of_honest_cars= 1000
 Number_of_lying_cars = 100
