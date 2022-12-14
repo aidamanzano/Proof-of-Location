@@ -19,6 +19,7 @@ class Car():
         self.honest = True #is the car honest or a liar
         self.algorithm_honesty_output = None #does the algorithm dictate that this car is honest or a liar
 
+
     @property
     def range_of_sight(self):
         return(self._range_of_sight)
@@ -193,6 +194,13 @@ class lying_car(Car):
                 self.neighbours.add(alleged_nearby_car)
         return self.neighbours
 
+#TODO: coerced (honest) car may also chose to add a lying car it does NOT see in the fake position grid
+
+""" if car coerced:
+    for every other car in its grid square:
+        if car is false:
+            if its fake position is in the same square:
+                add it to neighbours """
 
 Number_of_honest_cars= 1000
 Number_of_lying_cars = 100
