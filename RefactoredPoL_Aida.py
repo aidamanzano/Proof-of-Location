@@ -20,7 +20,6 @@ class Car():
         self.algorithm_honesty_output = None #does the algorithm dictate that this car is honest or a liar
         self.coerced = False
 
-
     @property
     def range_of_sight(self):
         return(self._range_of_sight)
@@ -203,6 +202,7 @@ class lying_car(Car):
 
 Number_of_honest_cars= 1000
 Number_of_lying_cars = 100
+#TODO: coerce some cars!!
 cars = []
 
 #initialising honest cars with a random position, velocity and range of sight
