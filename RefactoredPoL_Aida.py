@@ -7,7 +7,6 @@ import networkx as nx
 
 class Car():
     """class to create a car with a given position, range of sight and list of neighbours. Car is assumed to be honest"""
-    
     def __init__(self, position: list, velocity: list, range_of_sight: float, ID):
         self.position = np.array(position)
         self.velocity = np.array(velocity)
@@ -47,9 +46,12 @@ class Car():
         and not the car itself, add it to the set of neighbours"""
         x_index, y_index = self.get_position_indicies(city.grid_size) #TODO: check if the indicies are correct: they are correct
         for car in city.grid[x_index][y_index]:
-        #for an honest car we only add neighbours that are within the range of sight of its position
+            #if neighbouring car is a lying car, the honest car would not see it, because it is in a fake position
+
+            #for an honest car we only add neighbours that are within the range of sight of its position
             if self.is_in_range_of_sight(car.position) and car.ID != self.ID:
                 self.neighbours.add(car)
+
         return self.neighbours
 
     def is_car_a_neighbour(self, car):
@@ -184,15 +186,16 @@ class lying_car(Car):
     def add_neighbours(self, city):
         #get the indicies of the fake location
         x_index, y_index = self.get_fake_position_indicies(city.grid_size)
+
         for alleged_nearby_car in city.grid[x_index][y_index]:
-        #for an lying car we add neighbours w.r.t the fake position, even if they are not in range of sight
-            if alleged_nearby_car.ID != self.ID:
+            #for an lying car we add neighbours w.r.t the fake position, provided they are in range of sight
+            if self.is_in_range_of_sight(alleged_nearby_car.position) and alleged_nearby_car.ID != self.ID:
                 self.neighbours.add(alleged_nearby_car)
         return self.neighbours
 
 
-Number_of_honest_cars= 900
-Number_of_lying_cars = 300
+Number_of_honest_cars= 1000
+Number_of_lying_cars = 100
 cars = []
 
 #initialising honest cars with a random position, velocity and range of sight
@@ -222,7 +225,10 @@ for car in cars:
     London.assign(car)
     
 for car in cars:
-    car.move(0.1, London)
+    if car.honest is True:
+        car.move(0.1, London)
+    else:
+        car.move_fake_position
     car.neighbours = set()
     
 for car in cars:
@@ -318,6 +324,7 @@ for car in cars:
                         DAG.add_edge(witness, attestor)
 
     print('Is this car actually honest?: ' + str(car.honest) + ' Does the algorithm think this car is honest?: ' + str(car.algorithm_honesty_output))
+
     if car.honest is True and car.algorithm_honesty_output is True:
         True_Positive += 1
     if car.honest is True and car.algorithm_honesty_output is False:
