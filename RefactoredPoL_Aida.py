@@ -236,7 +236,7 @@ for liar_car in range(Number_of_lying_cars):
 #initialising the environment
 London = Environment([0,2], [0,2], 0.25)
 
-Visualise(cars, London)
+#Visualise(cars, London)
 
 for car in cars:
     #put all the cars into the Environment for the first time
@@ -252,7 +252,7 @@ for car in cars:
 for car in cars:
     car.add_neighbours(London)
 
-Visualise(cars, London)
+#Visualise(cars, London)
 
 #---------------------START OF AIDA POL protocol----------------------:
 DAG = nx.Graph()
@@ -327,6 +327,7 @@ for car in cars:
 
                 # Attestors must be a neighbour AND be in range of sight of witness
                 for attestor in witness_attestors:
+                    #TODO: check car is in range of sight of attestor
 
                     if attestor.is_car_a_neighbour(witness) is False:
                         car.algorithm_honesty_output = False
@@ -368,7 +369,17 @@ for car in cars:
             color_map[key] = 'red'
         if color_map[key] == 'magenta':
             color_map[key] = 'magenta'
+
     car_colors = [color_map.get(node) for node in DAG.nodes()]
 nx.draw(DAG, node_color=car_colors)
 print(Accuracy)
-plt.show()
+print(True_Negative, True_Positive, False_Negative, False_Positive)
+#plt.show()
+
+#TODO: plots of accuracy vs percentage of lying cars and coerced cars
+#over varying N of total cars and car density per network.
+
+#TODO: cluster of lying cars can attack the system
+#TODO: time varying component: showing how the graph varies over time
+
+#TODO: add entropy measure to the proof of position ??
