@@ -7,7 +7,7 @@ import networkx as nx
 
 class Car():
     """class to create a car with a given position, range of sight and list of neighbours. Car is assumed to be honest"""
-    def __init__(self, position: list, velocity: list, range_of_sight: float, ID):
+    def __init__(self, position: list, velocity: list, range_of_sight: float, ID, coerced):
         self.position = np.array(position)
         self.velocity = np.array(velocity)
         self.position_history = []
@@ -18,7 +18,7 @@ class Car():
         self.ID = ID
         self.honest = True #is the car honest or a liar
         self.algorithm_honesty_output = None #does the algorithm dictate that this car is honest or a liar
-        self.coerced = False
+        self.coerced = coerced
 
     @property
     def range_of_sight(self):
@@ -142,7 +142,7 @@ def Visualise(cars, environment):
 
         plt.xlim(environment.x_coordinates[0], environment.x_coordinates[1])
         plt.ylim(environment.y_coordinates[0], environment.y_coordinates[1])
-        
+        #TODO: trying to show coerced cars in another colour as well
         plt.scatter(x, y, marker="o", c = ['r' if car.honest is False else 'g'])     
     plt.grid()
     plt.show()
@@ -151,8 +151,8 @@ class lying_car(Car):
     """Class for dishonest cars. Position claim, move function, position indicies and neighbour adding functions are added to 
     consider the fake position."""
 
-    def __init__(self, position: list, velocity: list, range_of_sight: float, ID):
-        super().__init__(position, velocity, range_of_sight, ID)
+    def __init__(self, position: list, velocity: list, range_of_sight: float, ID, coerced):
+        super().__init__(position, velocity, range_of_sight, ID, coerced)
         self.fake_position = (np.random.rand(2)*2).tolist()
         self.honest = False
 
@@ -200,9 +200,9 @@ class lying_car(Car):
                 self.neighbours.add(alleged_nearby_car)
         return self.neighbours
 
-Number_of_honest_cars= 1000
+Number_of_honest_cars= 500
 Number_of_lying_cars = 100
-#TODO: coerce some cars!!
+Number_of_coerced_cars = 100
 cars = []
 
 #initialising honest cars with a random position, velocity and range of sight
@@ -211,7 +211,17 @@ for car in range(Number_of_honest_cars):
     velocity = ((np.random.rand(2)*2)-1).tolist()
     range_of_sight = 1000
     ID = str(car)
-    cars.append(Car(position, velocity, range_of_sight, ID))
+    coerced = False
+    cars.append(Car(position, velocity, range_of_sight, ID, coerced))
+
+#initialising coerced cars with a random position, velocity and range of sight
+for car in range(Number_of_honest_cars):
+    position = (np.random.rand(2)*2).tolist()
+    velocity = ((np.random.rand(2)*2)-1).tolist()
+    range_of_sight = 1000
+    ID = str(car)
+    coerced = True
+    cars.append(Car(position, velocity, range_of_sight, ID, coerced))
 
 #initialising lying cars with a random position, velocity and range of sight
 for liar_car in range(Number_of_lying_cars):
@@ -220,12 +230,13 @@ for liar_car in range(Number_of_lying_cars):
     #range_of_sight = round(random.uniform(0.1,0.2), 100)
     range_of_sight = 1000
     ID = str(liar_car)
-    cars.append(lying_car(position, velocity, range_of_sight, ID))
+    coerced = False
+    cars.append(lying_car(position, velocity, range_of_sight, ID, coerced))
 
 #initialising the environment
 London = Environment([0,2], [0,2], 0.25)
 
-#Visualise(cars, London)
+Visualise(cars, London)
 
 for car in cars:
     #put all the cars into the Environment for the first time
@@ -241,7 +252,7 @@ for car in cars:
 for car in cars:
     car.add_neighbours(London)
 
-#Visualise(cars, London)
+Visualise(cars, London)
 
 #---------------------START OF AIDA POL protocol----------------------:
 DAG = nx.Graph()
@@ -255,7 +266,7 @@ for car in cars:
 #A Car claims their position
     position_claim = car.claim_position()
     print('Car '+ car.ID +' claims position:', position_claim)
-    #DAG.add_node(car, color = 'red')
+    
 
     #Car 1 names two witnesses
     named_witnesses = car.name_witness()
@@ -274,6 +285,9 @@ for car in cars:
             if (named_witnesses[0] != car and named_witnesses[1] != car) and (named_witnesses[0] != named_witnesses[1]):
                 break
 
+        #TODO: add the red car to the graph only if the witnesses tests pass
+        DAG.add_node(car, color = 'red')
+
         # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
         for witness in named_witnesses:
             
@@ -290,8 +304,7 @@ for car in cars:
             else:
                 DAG.add_node(witness, color = 'blue')
                 car.algorithm_honesty_output = True
-
-            DAG.add_edge(car, witness)
+                DAG.add_edge(car, witness)
             
 
             # Witness 1 must name their attestors and Witness 2 must name their attestors
@@ -342,4 +355,20 @@ for car in cars:
         True_Negative += 1
     
     Accuracy = ((True_Positive + True_Negative) / (True_Positive + True_Negative + False_Positive + False_Negative)) * 100
+    color_map = nx.get_node_attributes(DAG, 'color')
+
+    #some code i copied from stack overflow to change the color of each node, 
+    # probably will do this better later    
+    for key in color_map:
+        if color_map[key] == 'green':
+            color_map[key] = 'green'
+        if color_map[key] == 'blue':
+            color_map[key] = 'blue'
+        if color_map[key] == 'red':
+            color_map[key] = 'red'
+        if color_map[key] == 'magenta':
+            color_map[key] = 'magenta'
+    car_colors = [color_map.get(node) for node in DAG.nodes()]
+nx.draw(DAG, node_color=car_colors)
 print(Accuracy)
+plt.show()
