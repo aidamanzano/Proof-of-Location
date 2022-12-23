@@ -89,7 +89,7 @@ class Car():
         #Find the indicies of the car position
         x_index, y_index = self.get_position_indicies(environment.grid_size)
         #REMOVE the car from previous position
-        environment.grid[x_index][y_index].remove(car)
+        environment.grid[x_index][y_index].remove(self) #TODO: check self
         
         preliminary_position = self.position + (dt * self.velocity) 
         #if the agent is getting close to the grid boundaries, invert the velocity
@@ -108,7 +108,7 @@ class Car():
         self.position_history.append(self.position)
 
         #Assign the car in its new position
-        environment.assign(car)
+        environment.assign(self) #TODO: check self
 
     def get_position_indicies(self, grid_size):
         """Calculating the grid indicies given a position"""
@@ -166,7 +166,7 @@ class lying_car(Car):
         #Find the indicies of the car's fake position
         x_index, y_index = self.get_fake_position_indicies(environment.grid_size)
         #REMOVE the car from previous position
-        environment.grid[x_index][y_index].remove(car)
+        environment.grid[x_index][y_index].remove(self) #TODO: check self
 
         preliminary_position = self.fake_position + (dt * self.velocity) 
 
@@ -183,7 +183,7 @@ class lying_car(Car):
         self.position_history.append(self.fake_position)
 
         #add car to its new fake position in the grid
-        environment.assign(car)
+        environment.assign(self) #TODO: check self
 
     def get_fake_position_indicies(self, grid_size):
         x_index = int(np.floor(self.fake_position[0]/grid_size))
@@ -200,184 +200,221 @@ class lying_car(Car):
                 self.neighbours.add(alleged_nearby_car)
         return self.neighbours
 
-Number_of_honest_cars= 500
+#---------------------START OF AIDA POL protocol----------------------:
+def PoL(cars):
+    DAG = nx.Graph()
+
+    True_Positive = 0
+    True_Negative = 0
+    False_Positive = 0
+    False_Negative = 0
+
+
+    for car in cars:
+    #A Car claims their position
+        position_claim = car.claim_position()
+        print('Car '+ car.ID +' claims position:', position_claim)
+        
+
+        #Car 1 names two witnesses
+        named_witnesses = car.name_witness()
+
+        if named_witnesses is None:
+            car.algorithm_honesty_output = False
+            pass
+            
+        else:
+            print('Car'+ car.ID +'names witnesses:', named_witnesses[0].ID, named_witnesses[1].ID)
+            
+            #check that the witness named is not the car itself (superfluous anyway) # AND check that car doesn't select same witness twice
+            tries = 5
+            for trial in range(tries):
+                named_witnesses = car.name_witness()    
+                if (named_witnesses[0] != car and named_witnesses[1] != car) and (named_witnesses[0] != named_witnesses[1]):
+                    break
+
+            #TODO: add the red car to the graph only if the witnesses tests pass
+            DAG.add_node(car, color = 'red')
+
+            # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
+            for witness in named_witnesses:
+                
+                if witness.is_car_a_neighbour(car) is False:
+                    car.algorithm_honesty_output = False
+                    print('car is not a neighbour of the witness')
+                    break
+
+                elif witness.is_in_range_of_sight(car.position) is False:
+                    car.algorithm_honesty_output = False
+                    print('car is not in range of sight of witness')
+                    break
+
+                else:
+                    DAG.add_node(witness, color = 'blue')
+                    car.algorithm_honesty_output = True
+                    DAG.add_edge(car, witness)
+                
+
+                # Witness 1 must name their attestors and Witness 2 must name their attestors
+                witness_attestors = witness.name_witness()
+                if witness_attestors is None:
+                    car.algorithm_honesty_output = False
+                    print('witness is not in range of sight of car')
+                    break
+                else:
+
+                    #check that neither of the attestors named is the car AND
+                    #check that witness doesn't select same attestor twice AND
+                    #check attestor 1 is not already a witness AND
+                    #check attestor 2 is not already a witness
+                    tries = 5
+                    for trial in range(tries):
+                        witness_attestors = witness.name_witness()
+                        if (witness_attestors[0] != car and witness_attestors[1] != car) and (witness_attestors[0] != witness_attestors[1]) and (witness_attestors[0] != named_witnesses[0] and witness_attestors[0] != named_witnesses[1]) and (witness_attestors[1] != named_witnesses[0] and witness_attestors[1] != named_witnesses[1]):
+                            break                
+
+                    # Attestors must be a neighbour AND be in range of sight of witness
+                    for attestor in witness_attestors:
+                        #TODO: check car is in range of sight of attestor
+
+                        if attestor.is_car_a_neighbour(witness) is False:
+                            car.algorithm_honesty_output = False
+                            print('witness is not a neighbour of the attestor')
+                            break
+
+                        elif attestor.is_in_range_of_sight(witness.position) is False:
+                            car.algorithm_honesty_output = False
+                            print('witness position is not in range of sight of attestor')
+                            break
+
+                        else:
+                            car.algorithm_honesty_output = True
+                            DAG.add_node(attestor, color = 'green')
+                            DAG.add_edge(witness, attestor)
+
+        print('Is this car actually honest?: ' + str(car.honest) + ' Does the algorithm think this car is honest?: ' + str(car.algorithm_honesty_output))
+
+        if car.honest is True and car.algorithm_honesty_output is True:
+            True_Positive += 1
+        if car.honest is True and car.algorithm_honesty_output is False:
+            False_Negative += 1
+        if car.honest is False and car.algorithm_honesty_output is True:
+            False_Positive += 1
+        if car.honest is False and car.algorithm_honesty_output is False:
+            True_Negative += 1
+        
+        Accuracy = ((True_Positive + True_Negative) / (True_Positive + True_Negative + False_Positive + False_Negative)) * 100
+        color_map = nx.get_node_attributes(DAG, 'color')
+
+        #some code i copied from stack overflow to change the color of each node, 
+        # probably will do this better later    
+        for key in color_map:
+            if color_map[key] == 'green':
+                color_map[key] = 'green'
+            if color_map[key] == 'blue':
+                color_map[key] = 'blue'
+            if color_map[key] == 'red':
+                color_map[key] = 'red'
+            
+        car_colors = [color_map.get(node) for node in DAG.nodes()]
+    #nx.draw(DAG, node_color=car_colors)
+    #print(Accuracy)
+    #print(True_Negative, True_Positive, False_Negative, False_Positive)
+    #plt.show()
+    return Accuracy, DAG
+
+#TODO: plots of accuracy vs percentage of lying cars and coerced cars
+#over varying N of total cars and car density per network.
+
+def honest_cars_init(N_honest_cars:int, car_list:list):
+#initialising honest cars with a random position, velocity and range of sight
+    for car in range(N_honest_cars):
+        position = (np.random.rand(2)*2).tolist()
+        velocity = ((np.random.rand(2)*2)-1).tolist()
+        range_of_sight = 1000
+        ID = str(car)
+        coerced = False
+        car_list.append(Car(position, velocity, range_of_sight, ID, coerced))
+    return car_list
+
+def coerced_cars_init(N_coerced_cars:int, car_list:list):
+#initialising coerced cars with a random position, velocity and range of sight
+    for car in range(N_coerced_cars):
+        position = (np.random.rand(2)*2).tolist()
+        velocity = ((np.random.rand(2)*2)-1).tolist()
+        range_of_sight = 1000
+        ID = str(car)
+        coerced = True
+        car_list.append(Car(position, velocity, range_of_sight, ID, coerced))
+    return car_list
+
+def lying_cars_init(N_lying_cars:int, car_list:list):
+#initialising lying cars with a random position, velocity and range of sight
+    for liar_car in range(N_lying_cars):
+        position = (np.random.rand(2)*2).tolist()
+        velocity = ((np.random.rand(2)*2)-1).tolist()
+        #range_of_sight = round(random.uniform(0.1,0.2), 100)
+        range_of_sight = 1000
+        ID = str(liar_car)
+        coerced = False
+        car_list.append(lying_car(position, velocity, range_of_sight, ID, coerced))
+    return car_list
+
+#--------------------------------
+Number_of_honest_cars= 700
 Number_of_lying_cars = 100
-Number_of_coerced_cars = 100
+Number_of_coerced_cars = 200
 cars = []
 
-#initialising honest cars with a random position, velocity and range of sight
-for car in range(Number_of_honest_cars):
-    position = (np.random.rand(2)*2).tolist()
-    velocity = ((np.random.rand(2)*2)-1).tolist()
-    range_of_sight = 1000
-    ID = str(car)
-    coerced = False
-    cars.append(Car(position, velocity, range_of_sight, ID, coerced))
-
-#initialising coerced cars with a random position, velocity and range of sight
-for car in range(Number_of_honest_cars):
-    position = (np.random.rand(2)*2).tolist()
-    velocity = ((np.random.rand(2)*2)-1).tolist()
-    range_of_sight = 1000
-    ID = str(car)
-    coerced = True
-    cars.append(Car(position, velocity, range_of_sight, ID, coerced))
-
-#initialising lying cars with a random position, velocity and range of sight
-for liar_car in range(Number_of_lying_cars):
-    position = (np.random.rand(2)*2).tolist()
-    velocity = ((np.random.rand(2)*2)-1).tolist()
-    #range_of_sight = round(random.uniform(0.1,0.2), 100)
-    range_of_sight = 1000
-    ID = str(liar_car)
-    coerced = False
-    cars.append(lying_car(position, velocity, range_of_sight, ID, coerced))
+cars = honest_cars_init(Number_of_honest_cars, cars)
+cars = coerced_cars_init(Number_of_coerced_cars, cars)
+cars = lying_cars_init(Number_of_lying_cars, cars)
 
 #initialising the environment
 London = Environment([0,2], [0,2], 0.25)
 
 #Visualise(cars, London)
+def environment_update(car_list, dt, environment):
+    for car in car_list:
+        #put all the cars into the Environment for the first time
+        environment.assign(car)
+        
+    for car in car_list:
+        if car.honest is True:
+            car.move(dt, environment)
+        else:
+            car.move_fake_position
+        car.neighbours = set()
+        
+    for car in car_list:
+        car.add_neighbours(environment) 
 
-for car in cars:
-    #put all the cars into the Environment for the first time
-    London.assign(car)
-    
-for car in cars:
-    if car.honest is True:
-        car.move(0.1, London)
-    else:
-        car.move_fake_position
-    car.neighbours = set()
-    
-for car in cars:
-    car.add_neighbours(London)
-
+#environment_update(cars, 0.1, London)
+#Accuracy, DAG = PoL(cars)
 #Visualise(cars, London)
 
-#---------------------START OF AIDA POL protocol----------------------:
-DAG = nx.Graph()
+number_of_simulations = 10
+fig = plt.figure()
+plt.title('Monte Carlo Simulations of Proof of Location Protocol, Number of Simulations = ' + str(number_of_simulations))
+plt.xlabel('simulation number')
+plt.ylabel('Accuracy')
+plt.xlim([0, number_of_simulations])
 
-True_Positive = 0
-True_Negative = 0
-False_Positive = 0
-False_Negative = 0
-
-for car in cars:
-#A Car claims their position
-    position_claim = car.claim_position()
-    print('Car '+ car.ID +' claims position:', position_claim)
+simulation_no = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+Accuracies = []
+for simulation in range(number_of_simulations):
     
+    percent_of_coerced_cars = []
+    environment_update(cars, 0.1, London)
+    simulation_Accuracy, DAG = PoL(cars)
+    x = ((Number_of_coerced_cars) / (Number_of_honest_cars + Number_of_coerced_cars + Number_of_lying_cars)) * 100
+    percent_of_coerced_cars.append(x)
+    Accuracies.append(simulation_Accuracy)
+plt.bar(simulation_no, Accuracies)
+plt.show()
 
-    #Car 1 names two witnesses
-    named_witnesses = car.name_witness()
 
-    if named_witnesses is None:
-        car.algorithm_honesty_output = False
-        pass
-        
-    else:
-        print('Car'+ car.ID +'names witnesses:', named_witnesses[0].ID, named_witnesses[1].ID)
-        
-        #check that the witness named is not the car itself (superfluous anyway) # AND check that car doesn't select same witness twice
-        tries = 5
-        for trial in range(tries):
-            named_witnesses = car.name_witness()    
-            if (named_witnesses[0] != car and named_witnesses[1] != car) and (named_witnesses[0] != named_witnesses[1]):
-                break
 
-        #TODO: add the red car to the graph only if the witnesses tests pass
-        DAG.add_node(car, color = 'red')
-
-        # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
-        for witness in named_witnesses:
-            
-            if witness.is_car_a_neighbour(car) is False:
-                car.algorithm_honesty_output = False
-                print('car is not a neighbour of the witness')
-                break
-
-            elif witness.is_in_range_of_sight(car.position) is False:
-                car.algorithm_honesty_output = False
-                print('car is not in range of sight of witness')
-                break
-
-            else:
-                DAG.add_node(witness, color = 'blue')
-                car.algorithm_honesty_output = True
-                DAG.add_edge(car, witness)
-            
-
-            # Witness 1 must name their attestors and Witness 2 must name their attestors
-            witness_attestors = witness.name_witness()
-            if witness_attestors is None:
-                car.algorithm_honesty_output = False
-                print('witness is not in range of sight of car')
-                break
-            else:
-
-                #check that neither of the attestors named is the car AND
-                #check that witness doesn't select same attestor twice AND
-                #check attestor 1 is not already a witness AND
-                #check attestor 2 is not already a witness
-                tries = 5
-                for trial in range(tries):
-                    witness_attestors = witness.name_witness()
-                    if (witness_attestors[0] != car and witness_attestors[1] != car) and (witness_attestors[0] != witness_attestors[1]) and (witness_attestors[0] != named_witnesses[0] and witness_attestors[0] != named_witnesses[1]) and (witness_attestors[1] != named_witnesses[0] and witness_attestors[1] != named_witnesses[1]):
-                        break                
-
-                # Attestors must be a neighbour AND be in range of sight of witness
-                for attestor in witness_attestors:
-                    #TODO: check car is in range of sight of attestor
-
-                    if attestor.is_car_a_neighbour(witness) is False:
-                        car.algorithm_honesty_output = False
-                        print('witness is not a neighbour of the attestor')
-                        break
-
-                    elif attestor.is_in_range_of_sight(witness.position) is False:
-                        car.algorithm_honesty_output = False
-                        print('witness position is not in range of sight of attestor')
-                        break
-
-                    else:
-                        car.algorithm_honesty_output = True
-                        DAG.add_node(attestor, color = 'green')
-                        DAG.add_edge(witness, attestor)
-
-    print('Is this car actually honest?: ' + str(car.honest) + ' Does the algorithm think this car is honest?: ' + str(car.algorithm_honesty_output))
-
-    if car.honest is True and car.algorithm_honesty_output is True:
-        True_Positive += 1
-    if car.honest is True and car.algorithm_honesty_output is False:
-        False_Negative += 1
-    if car.honest is False and car.algorithm_honesty_output is True:
-        False_Positive += 1
-    if car.honest is False and car.algorithm_honesty_output is False:
-        True_Negative += 1
-    
-    Accuracy = ((True_Positive + True_Negative) / (True_Positive + True_Negative + False_Positive + False_Negative)) * 100
-    color_map = nx.get_node_attributes(DAG, 'color')
-
-    #some code i copied from stack overflow to change the color of each node, 
-    # probably will do this better later    
-    for key in color_map:
-        if color_map[key] == 'green':
-            color_map[key] = 'green'
-        if color_map[key] == 'blue':
-            color_map[key] = 'blue'
-        if color_map[key] == 'red':
-            color_map[key] = 'red'
-        if color_map[key] == 'magenta':
-            color_map[key] = 'magenta'
-
-    car_colors = [color_map.get(node) for node in DAG.nodes()]
-nx.draw(DAG, node_color=car_colors)
-print(Accuracy)
-print(True_Negative, True_Positive, False_Negative, False_Positive)
-#plt.show()
-
-#TODO: plots of accuracy vs percentage of lying cars and coerced cars
-#over varying N of total cars and car density per network.
 
 #TODO: cluster of lying cars can attack the system
 #TODO: time varying component: showing how the graph varies over time
