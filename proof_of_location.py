@@ -18,7 +18,7 @@ def PoL(cars):
     for car in cars:
     #A Car claims their position
         position_claim = car.claim_position()
-        print('Car '+ car.ID +' claims position:', position_claim)
+        #print('Car '+ car.ID +' claims position:', position_claim)
         
 
         #Car 1 names two witnesses
@@ -29,7 +29,7 @@ def PoL(cars):
             pass
             
         else:
-            print('Car'+ car.ID +'names witnesses:', named_witnesses[0].ID, named_witnesses[1].ID)
+            #print('Car'+ car.ID +'names witnesses:', named_witnesses[0].ID, named_witnesses[1].ID)
             
             #check that the witness named is not the car itself (superfluous anyway) # AND check that car doesn't select same witness twice
             tries = 5
@@ -46,12 +46,12 @@ def PoL(cars):
                 
                 if witness.is_car_a_neighbour(car) is False:
                     car.algorithm_honesty_output = False
-                    print('car is not a neighbour of the witness')
+                    #print('car is not a neighbour of the witness')
                     break
 
                 elif witness.is_in_range_of_sight(car.position) is False:
                     car.algorithm_honesty_output = False
-                    print('car is not in range of sight of witness')
+                    #print('car is not in range of sight of witness')
                     break
 
                 else:
@@ -64,7 +64,7 @@ def PoL(cars):
                 witness_attestors = witness.name_witness()
                 if witness_attestors is None:
                     car.algorithm_honesty_output = False
-                    print('witness is not in range of sight of car')
+                    #print('witness is not in range of sight of car')
                     break
                 else:
 
@@ -84,12 +84,12 @@ def PoL(cars):
 
                         if attestor.is_car_a_neighbour(witness) is False:
                             car.algorithm_honesty_output = False
-                            print('witness is not a neighbour of the attestor')
+                            #print('witness is not a neighbour of the attestor')
                             break
 
                         elif attestor.is_in_range_of_sight(witness.position) is False:
                             car.algorithm_honesty_output = False
-                            print('witness position is not in range of sight of attestor')
+                            #print('witness position is not in range of sight of attestor')
                             break
 
                         else:
@@ -97,7 +97,7 @@ def PoL(cars):
                             DAG.add_node(attestor, color = 'green')
                             DAG.add_edge(witness, attestor)
 
-        print('Is this car actually honest?: ' + str(car.honest) + ' Does the algorithm think this car is honest?: ' + str(car.algorithm_honesty_output))
+        #print('Is this car actually honest?: ' + str(car.honest) + ' Does the algorithm think this car is honest?: ' + str(car.algorithm_honesty_output))
 
         if car.honest is True and car.algorithm_honesty_output is True:
             True_Positive += 1
@@ -127,4 +127,4 @@ def PoL(cars):
     #print(Accuracy)
     #print(True_Negative, True_Positive, False_Negative, False_Positive)
     #plt.show()
-    return Accuracy, DAG
+    return Accuracy, DAG, True_Positive, True_Negative, False_Positive, False_Negative

@@ -61,7 +61,7 @@ class Car():
         if car in self.neighbours:
             return True
         else:
-            print("The car is not a neighbour!")
+            #print("The car is not a neighbour!")
             return False
 
     def claim_position(self):
@@ -74,7 +74,7 @@ class Car():
             self.witnesses = random.sample(self.neighbours, 2)
             return self.witnesses
         else:
-            print("The car does not have sufficient neighbours to witness its position!")
+            #print("The car does not have sufficient neighbours to witness its position!")
             return None
             #Even if a car has exactly one neighbour, I will ignore because it is not enough to proceed in the protocol.
         
@@ -122,7 +122,7 @@ class lying_car(Car):
         self.honest = False
 
     def claim_position(self):
-        print('this car is a lying car', ' its real position is: ', self.position, ' its fake position is: ', self.fake_position)
+        #print('this car is a lying car', ' its real position is: ', self.position, ' its fake position is: ', self.fake_position)
         return self.ID, self.fake_position
 
     def move_fake_position(self, dt, environment):

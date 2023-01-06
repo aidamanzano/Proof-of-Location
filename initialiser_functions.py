@@ -42,3 +42,6 @@ def car_list_generator(Number_of_honest_cars, Number_of_lying_cars, Number_of_co
     cars = coerced_cars_init(Number_of_coerced_cars, cars)
     cars = lying_cars_init(Number_of_lying_cars, cars)
     return cars
+
+#cars = car_list_generator(700, 100, 200)
+#print(cars)

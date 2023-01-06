@@ -317,10 +317,10 @@ def PoL(cars):
                 color_map[key] = 'red'
             
         car_colors = [color_map.get(node) for node in DAG.nodes()]
-    #nx.draw(DAG, node_color=car_colors)
+    nx.draw(DAG, node_color=car_colors)
     #print(Accuracy)
     #print(True_Negative, True_Positive, False_Negative, False_Positive)
-    #plt.show()
+    plt.show()
     return Accuracy, DAG
 
 #TODO: plots of accuracy vs percentage of lying cars and coerced cars

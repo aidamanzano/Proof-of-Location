@@ -1,4 +1,9 @@
-import matplotlib as plt
+import matplotlib.pyplot as plt
+import initialiser_functions as i
+import environment_class as e
+import seaborn as sns
+import pandas as pd
+import os
 
 def Visualise(cars, environment):
     """Visualising cars in the environment, if they are honest they are shown in green, otherwise shown in red"""
@@ -13,22 +18,58 @@ def Visualise(cars, environment):
     plt.grid()
     plt.show()
 
-def simulation_plots(number_of_simulations, csv):
+cars = i.car_list_generator(10, 2, 1)
+London = e.Environment([0, 2], [0, 2], 0.25)
+#Visualise(cars, London)
+
+def simulation_violin_plots(number_of_simulations, csv_path, x_variable:str, y_varible:str):
+
+    os.makedirs(csv_path + 'plots/', exist_ok =True)
     
-    fig = plt.figure()
-    plt.title('Monte Carlo Simulations of Proof of Location Protocol, Number of Simulations = ' + str(number_of_simulations))
-    plt.xlabel('Simulation number')
-    plt.ylabel('Accuracy in percentage')
-    plt.xlim([0, number_of_simulations])
+    df = pd.read_csv(csv_path)
+    plt.figure(figsize=(10,5))
 
-    #TODO: this is NOT finished/correct at all, need to write this properly
+    ax = sns.violinplot(x=df[x_variable], y=df[y_varible], data=df)
+    
+    ax.set_title('Proof of Location Protocol Accuracy, Number of Simulations = ' + str(number_of_simulations))
+    ax.set_ylabel(y_varible)
+    ax.set_xlabel(x_variable)
 
-    #Load csv file from path
-
-    #should I make this boxplot or violin?
-    plt.bar(simulation_no, Accuracies)
     plt.show()
+    ax = ax.get_figure()
+    ax.savefig(csv_path + 'plots/' + x_variable + 'violin.png')
 
-    #generate plots for each simulation and save them into folder
+def subplots(directory_pathfile, number_of_simulations, x_variable:str):
+    fig, axes = plt.subplots(nrows = 2, ncols = 2, figsize=(18,12))
+    fig.suptitle('Proof of Location Protocol Classifications, Number of Simulations = ' + str(number_of_simulations))
+    
+    df = pd.read_csv(directory_pathfile+'full_data.csv')
+    #create boxplot in each subplot
 
-#call this function for each set of variable simulations
+    sns.boxplot(data=df, x=x_variable, y='Percent True Positives', ax=axes[0,0])
+    sns.boxplot(data=df, x=x_variable, y='Percent True Negatives', ax=axes[0,1])
+    sns.boxplot(data=df, x=x_variable, y='Percent False Positives', ax=axes[1,0])
+    sns.boxplot(data=df, x=x_variable, y='Percent False Negatives', ax=axes[1,1])
+
+    ax = fig.get_figure()
+    ax.savefig(directory_pathfile +'full_data.csv' + 'plots/' + 'subplots.png')
+
+def simulation_box_plots(number_of_simulations, csv_path, x_variable:str, y_varible:str):
+
+    os.makedirs(csv_path + 'plots/', exist_ok =True)
+    
+    df = pd.read_csv(csv_path)
+
+    plt.figure(figsize=(15,10))
+    ax = sns.boxplot(x=df[x_variable], y=df[y_varible], data=df)
+    
+    
+    ax.set_title('Proof of Location Protocol Accuracy, Number of Simulations = ' + str(number_of_simulations))
+    ax.set_ylabel(y_varible)
+    ax.set_xlabel(x_variable)
+
+    plt.show()
+    
+    ax = ax.get_figure()
+    ax.savefig(csv_path + 'plots/' + x_variable + 'boxplot.png')
+
