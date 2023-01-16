@@ -15,6 +15,7 @@ class Car():
         self.honest = True #is the car honest or a liar
         self.algorithm_honesty_output = None #does the algorithm dictate that this car is honest or a liar
         self.coerced = coerced
+        self.neighbour_validations = 0
 
     @property
     def range_of_sight(self):

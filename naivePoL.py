@@ -1,3 +1,5 @@
+#TODO: refactor this mess 
+
 import numpy as np
 import random
 from matplotlib import pyplot as plt
@@ -195,5 +197,5 @@ nx.draw(DAG)
 plt.show()
 
 print('no. of nodes: ',DAG.number_of_nodes())
-
+#https://networkx.org/documentation/stable/reference/algorithms/generated/networkx.algorithms.components.connected_components.html
 
