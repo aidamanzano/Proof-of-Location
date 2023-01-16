@@ -31,7 +31,6 @@ v.simulation_box_plots(100, directory_pathfile+'full_data.csv', 'Percent of hone
 v.simulation_violin_plots(100, directory_pathfile+'full_data.csv', 'Percent of honest cars', 'Accuracy')
 
 #--------------------------------------
-
 directory_pathfile = '/Users/amm3117/Desktop/Proof-of-Location/Proof-of-Location/Percent of coerced cars/'
 full_csv(directory_pathfile)
 
@@ -46,7 +45,7 @@ full_csv(directory_pathfile)
 
 v.subplots(directory_pathfile, 100, 'Percent of lying cars')
 v.simulation_box_plots(100, directory_pathfile+'full_data.csv', 'Percent of lying cars', 'Accuracy')
-v.simulation_violin_plots(100, directory_pathfile+'full_data.csv', 'Percent of lying cars', 'Accuracy')
+v.simulation_violin_plots(100, directory_pathfile+'full_data.csv', 'Percent of lying cars', 'Accuracy') 
 
 
 
