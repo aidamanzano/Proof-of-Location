@@ -1,0 +1,10 @@
+# pycache
+__pycache__
+__pycache__/environment_class.cpython-39.pyc
+
+# mac files
+.DS_Store
+
+# venvs
+venv/
+
