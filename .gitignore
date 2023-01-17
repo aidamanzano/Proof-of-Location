@@ -8,3 +8,5 @@ __pycache__/environment_class.cpython-39.pyc
 # venvs
 venv/
 
+__pycache__/visualisation_functions.cpython-39.pyc
+.gitignore

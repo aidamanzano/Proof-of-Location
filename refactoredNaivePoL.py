@@ -19,25 +19,28 @@ def NaivePoL(cars, threshold):
 
         
         position_claim = car.claim_position()
-        
+        if len(car.neighbours) == 0:
+            car.algorithm_honesty_output = False
+            pass
+        else:
         #print('Car '+car.ID +' claims position:',position_claim)
         #print('CAR range of sight is', car.range_of_sight)
         #print('number of neighbours: ', len(car.neighbours))
 
 
-        for neighbor in car.neighbours:
-            
-            if car.is_in_range_of_sight(neighbor.position):
-                car.neighbour_validations += 1
+            for neighbor in car.neighbours:
+                
+                if car.is_in_range_of_sight(neighbor.position):
+                    car.neighbour_validations += 1
 
 
-        score = car.neighbour_validations/len(car.neighbours)
-        #print('score =', score)
-        if score >= threshold:
-            car.algorithm_honesty_output = True
-            valid_nodes.append(car)
-        else:
-            car.algorithm_honesty_output = False
+            score = car.neighbour_validations/len(car.neighbours)
+            #print('score =', score)
+            if score >= threshold:
+                car.algorithm_honesty_output = True
+                valid_nodes.append(car)
+            else:
+                car.algorithm_honesty_output = False
 
         if car.honest is True and car.algorithm_honesty_output is True:
             True_Positive += 1
@@ -58,7 +61,7 @@ def NaivePoL(cars, threshold):
 
 
     Accuracy = ((True_Positive + True_Negative) / (True_Positive + True_Negative + False_Positive + False_Negative)) * 100
-
+    #TODO: check that only cars that have a sufficiently high threshold are used to validate
     #nx.draw(DAG)
     #plt.show()
 

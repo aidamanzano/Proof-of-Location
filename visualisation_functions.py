@@ -22,7 +22,7 @@ cars = i.car_list_generator(10, 2, 1)
 London = e.Environment([0, 2], [0, 2], 0.25)
 #Visualise(cars, London)
 
-def simulation_violin_plots(number_of_simulations, csv_path, x_variable:str, y_varible:str):
+def simulation_violin_plots(algorithm_type: str, number_of_simulations, csv_path, x_variable:str, y_varible:str):
 
     os.makedirs(csv_path + 'plots/', exist_ok =True)
     
@@ -31,7 +31,7 @@ def simulation_violin_plots(number_of_simulations, csv_path, x_variable:str, y_v
 
     ax = sns.violinplot(x=df[x_variable], y=df[y_varible], data=df)
     
-    ax.set_title('Proof of Location Protocol Accuracy, Number of Simulations = ' + str(number_of_simulations))
+    ax.set_title(algorithm_type + 'Proof of Location Protocol Accuracy, Number of Simulations = ' + str(number_of_simulations))
     ax.set_ylabel(y_varible)
     ax.set_xlabel(x_variable)
 
@@ -39,9 +39,9 @@ def simulation_violin_plots(number_of_simulations, csv_path, x_variable:str, y_v
     ax = ax.get_figure()
     ax.savefig(csv_path + 'plots/' + x_variable + 'violin.png')
 
-def subplots(directory_pathfile, number_of_simulations, x_variable:str):
+def subplots(algorithm_type: str, directory_pathfile, number_of_simulations, x_variable:str):
     fig, axes = plt.subplots(nrows = 2, ncols = 2, figsize=(18,12))
-    fig.suptitle('Proof of Location Protocol Classifications, Number of Simulations = ' + str(number_of_simulations))
+    fig.suptitle(algorithm_type + 'Proof of Location Protocol Classifications, Number of Simulations = ' + str(number_of_simulations))
     
     df = pd.read_csv(directory_pathfile+'full_data.csv')
     #create boxplot in each subplot
@@ -54,7 +54,7 @@ def subplots(directory_pathfile, number_of_simulations, x_variable:str):
     ax = fig.get_figure()
     ax.savefig(directory_pathfile +'full_data.csv' + 'plots/' + 'subplots.png')
 
-def simulation_box_plots(number_of_simulations, csv_path, x_variable:str, y_varible:str):
+def simulation_box_plots(algorithm_type: str, number_of_simulations, csv_path, x_variable:str, y_varible:str):
 
     os.makedirs(csv_path + 'plots/', exist_ok =True)
     
@@ -64,7 +64,7 @@ def simulation_box_plots(number_of_simulations, csv_path, x_variable:str, y_vari
     ax = sns.boxplot(x=df[x_variable], y=df[y_varible], data=df)
     
     
-    ax.set_title('Proof of Location Protocol Accuracy, Number of Simulations = ' + str(number_of_simulations))
+    ax.set_title(algorithm_type + 'Proof of Location Protocol Accuracy, Number of Simulations = ' + str(number_of_simulations))
     ax.set_ylabel(y_varible)
     ax.set_xlabel(x_variable)
 
