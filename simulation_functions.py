@@ -31,7 +31,6 @@ def check_interest_variable(var, list):
     for index in range(len(list)):
         
         if var == index:
-            #print('HERE', str(list[index]))
             return str(list[index])
 
 
@@ -65,8 +64,9 @@ def aPoL_simulation_generator(number_of_simulations:int, Number_of_coerced_cars:
     'True Positives', 'True Negatives', 'False Positives', 'False Negatives', 
     'Percent True Positives', 'Percent True Negatives', 'Percent False Positives','Percent False Negatives'])
     
+    #filename will be the absolute number of cars of the variable of interest
     filename = check_interest_variable(interest_variable, variable_list)
-    #print(filename)
+    
     headers = df.columns.tolist()
     cwd = os.getcwd()
     
@@ -74,13 +74,16 @@ def aPoL_simulation_generator(number_of_simulations:int, Number_of_coerced_cars:
     #with 'Simulation number' as its first element
     path = cwd + '/' +  headers[interest_variable+1] + '/'
     os.makedirs(path, exist_ok =True)
+
+    #create a csv file in the path that is the current working directory + a new folder called the same as the interest variable +
+    # + the absolute number of cars of the variable of interest.txt
     df.to_csv(path + filename + '.txt')
     
     return path + filename + '.txt', total_cars
 
 
 
-def npol_simulation_generator(number_of_simulations:int, Number_of_coerced_cars:int, Number_of_lying_cars:int, Number_of_honest_cars:int, interest_variable:int, variable_list:list):
+def npol_simulation_generator(number_of_simulations:int, Number_of_coerced_cars:int, Number_of_lying_cars:int, Number_of_honest_cars:int, interest_variable:int, variable_list:list, threshold):
     """Simulation generator for naive PoL algorithm that takes number of simulations to perform, the three relevant variables. 
     interest_variable the index corresponding to the variable you want to pick from the variable_list"""
 
@@ -99,7 +102,7 @@ def npol_simulation_generator(number_of_simulations:int, Number_of_coerced_cars:
         density = (London.width * London.height) / total_cars
 
         #Load the PoL algoritm and feed it the initialised objects
-        Accuracy, DAG, True_Positive, True_Negative, False_Positive, False_Negative = npol.NaivePoL(cars, 0.5)
+        Accuracy, DAG, True_Positive, True_Negative, False_Positive, False_Negative = npol.NaivePoL(cars, threshold)
 
         row = parser(simulation, Number_of_coerced_cars, Number_of_lying_cars, Number_of_honest_cars, density, Accuracy, True_Positive, True_Negative, False_Positive, False_Negative)
         
@@ -109,6 +112,7 @@ def npol_simulation_generator(number_of_simulations:int, Number_of_coerced_cars:
     'True Positives', 'True Negatives', 'False Positives', 'False Negatives', 
     'Percent True Positives', 'Percent True Negatives', 'Percent False Positives','Percent False Negatives'])
     
+    #filename will be the absolute number of cars of the variable of interest
     filename = check_interest_variable(interest_variable, variable_list)
     
     headers = df.columns.tolist()
@@ -118,6 +122,9 @@ def npol_simulation_generator(number_of_simulations:int, Number_of_coerced_cars:
     #with 'Simulation number' as its first element
     path = cwd + '/' + 'naivePoL/' + headers[interest_variable+1] + '/'
     os.makedirs(path, exist_ok =True)
+
+    #create a csv file in the path that is the current working directory + a new folder called the same as the interest variable +
+    # + the absolute number of cars of the variable of interest.txt
     df.to_csv(path + filename + '.txt')
     
     return path + filename + '.txt', total_cars
@@ -136,7 +143,6 @@ def full_csv(directory_path_string):
         
         if filename.endswith('.txt'):
             simulation_path = directory_path_string + filename
-            #print('HERE! ',simulation_path)
             data = pd.read_csv(simulation_path)
             df = df.append(data)
 
