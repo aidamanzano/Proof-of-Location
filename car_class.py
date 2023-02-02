@@ -42,19 +42,49 @@ class Car():
     def add_neighbours(self, city):
         """Find the grid quadrant of the car. Then, for every other neighbouring car in that quadrant, if it is in the range of sight 
         and not the car itself, add it to the set of neighbours"""
+
         x_index, y_index = self.get_position_indicies(city.grid_size)
-        #coerced will chose to add a lying car it does NOT see in the fake position grid
-        if self.coerced is True:
-            for car in city.grid[x_index][y_index]:
-                if car.honest is False and self.ID != car.ID:
-                    self.neighbours.add(car)
+        #loop through all adjacent grid squares
 
-        for car in city.grid[x_index][y_index]:
-            #if neighbouring car is a lying car, the honest car would not see it, because it is in a fake position
+        for grid_square in [[x_index - 1, y_index], [x_index + 1, y_index], [x_index, y_index - 1], [x_index, y_index + 1], [x_index, y_index]]:
+            #print(grid_square[0], environment_x_coordinates[0])
+            if grid_square[0] <= city.x_coordinates[0] or grid_square[0] >= city.x_coordinates[1]:
+                pass
+            elif grid_square[1] <= city.y_coordinates[0] or grid_square[0] >= city.y_coordinates[1]:
+                pass
+            else:
+                print([grid_square[0], grid_square[1]])
 
-            #for an honest car we only add neighbours that are within the range of sight of its position
-            if self.is_in_range_of_sight(car.position) and car.ID != self.ID:
-                self.neighbours.add(car)
+                #coerced will chose to add a lying car it does NOT see in the fake position grid
+                for car in city.grid[grid_square[0]][grid_square[1]]:
+
+                    #first condition is redundant because coerced cars are a subset of honest, but leaving this in for clarity.
+                    if self.honest == True and self.coerced is True: 
+
+                        #a coerced car will add the FAKE position of a lying car 
+                        #if it is in its range of sight and same grid square
+                        if car.honest is False and self.ID != car.ID:
+                            x, y = car.get_fake_position_indicies(city.grid_size)
+                            if x == grid_square[0] and y == grid_square[1] and self.is_in_range_of_sight(car.fake_position):
+                                self.neighbours.add(car)
+
+                        #This covers both honest cars and coerced cars, since coerced are a subset of honest cars. 
+                        elif car.honest is True and self.ID != car.ID and self.is_in_range_of_sight(car.position):
+                            self.neighbours.add(car)
+
+                    elif self.honest == True and self.coerced is False: 
+                        #an honest car will add the REAL position of a lying car if it
+                        #is in its range of sight and same grid square
+
+                        if car.honest is False and self.ID != car.ID:
+                            x, y = car.get_position_indicies(city.grid_size)
+                            if x == grid_square[0] and y == grid_square[1] and self.is_in_range_of_sight(car.position):
+                                self.neighbours.add(car)
+
+                        #This covers both honest cars and coerced cars, since coerced are a subset of honest cars. 
+                        elif car.honest is True and self.ID != car.ID:
+                            if self.is_in_range_of_sight(car.position):
+                                self.neighbours.add(car)
 
         return self.neighbours
 
@@ -86,7 +116,7 @@ class Car():
         #Find the indicies of the car position
         x_index, y_index = self.get_position_indicies(environment.grid_size)
         #REMOVE the car from previous position
-        environment.grid[x_index][y_index].remove(self) #TODO: check self
+        environment.grid[x_index][y_index].remove(self) 
         
         preliminary_position = self.position + (dt * self.velocity) 
         #if the agent is getting close to the grid boundaries, invert the velocity
@@ -105,7 +135,7 @@ class Car():
         self.position_history.append(self.position)
 
         #Assign the car in its new position
-        environment.assign(self) #TODO: check self
+        environment.assign(self) 
 
     def get_position_indicies(self, grid_size):
         """Calculating the grid indicies given a position"""
@@ -117,9 +147,9 @@ class lying_car(Car):
     """Class for dishonest cars. Position claim, move function, position indicies and neighbour adding functions are added to 
     consider the fake position."""
 
-    def __init__(self, position: list, velocity: list, range_of_sight: float, ID, coerced):
+    def __init__(self, position: list, velocity: list, range_of_sight: float, ID, coerced, fake_position: list):
         super().__init__(position, velocity, range_of_sight, ID, coerced)
-        self.fake_position = (np.random.rand(2)*2).tolist()
+        self.fake_position = fake_position #(np.random.rand(2)*2).tolist()
         self.honest = False
 
     def claim_position(self):
@@ -132,7 +162,7 @@ class lying_car(Car):
         #Find the indicies of the car's fake position
         x_index, y_index = self.get_fake_position_indicies(environment.grid_size)
         #REMOVE the car from previous position
-        environment.grid[x_index][y_index].remove(self) #TODO: check self
+        environment.grid[x_index][y_index].remove(self)
 
         preliminary_position = self.fake_position + (dt * self.velocity) 
 
@@ -149,7 +179,7 @@ class lying_car(Car):
         self.position_history.append(self.fake_position)
 
         #add car to its new fake position in the grid
-        environment.assign(self) #TODO: check self
+        environment.assign(self)
 
     def get_fake_position_indicies(self, grid_size):
         x_index = int(np.floor(self.fake_position[0]/grid_size))
@@ -157,12 +187,27 @@ class lying_car(Car):
         return x_index, y_index
 
     def add_neighbours(self, city):
+
         #get the indicies of the fake location
         x_index, y_index = self.get_fake_position_indicies(city.grid_size)
 
         for alleged_nearby_car in city.grid[x_index][y_index]:
-            #for an lying car we add neighbours w.r.t the fake position, provided they are in range of sight
-            if self.is_in_range_of_sight(alleged_nearby_car.position) and alleged_nearby_car.ID != self.ID:
-                self.neighbours.add(alleged_nearby_car)
+
+            #if a lying car finds another lying car claiming to be in the same FAKE position, it will add it as its neighbour. 
+            #it will NOT add the other lying car's real position, only its FAKE position
+
+            if alleged_nearby_car.honest == False:
+                x, y = alleged_nearby_car.get_fake_position_indicies(city.grid_size)
+                if x == x_index and y == y_index:
+                    if self.is_in_range_of_sight(alleged_nearby_car.position) and alleged_nearby_car.ID != self.ID:
+                        self.neighbours.add(alleged_nearby_car)
+
+            #for a lying car we add neighbours that are honest w.r.t its fake position, provided they are in range of sight
+            else:
+                if self.is_in_range_of_sight(alleged_nearby_car.position) and alleged_nearby_car.ID != self.ID:
+                    self.neighbours.add(alleged_nearby_car)
+
+        #Lying car does NOT add any neighbours in its REAL position.
+
         return self.neighbours
 

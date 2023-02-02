@@ -33,13 +33,17 @@ def PoL(cars):
             
             #check that the witness named is not the car itself (superfluous anyway) # AND check that car doesn't select same witness twice
             tries = 5
-            for trial in range(tries):
-                named_witnesses = car.name_witness()    
+            for trial in range(tries):   
                 if (named_witnesses[0] != car and named_witnesses[1] != car) and (named_witnesses[0] != named_witnesses[1]):
                     break
+                else:
+                    named_witnesses = car.name_witness()
 
-            #TODO: add the red car to the graph only if the witnesses tests pass
-            DAG.add_node(car, color = 'red')
+            if len(named_witnesses) < 2:
+                car.algorithm_honesty_output = False
+
+            else:#TODO: add the red car to the graph only if the witnesses tests pass
+                DAG.add_node(car, color = 'red')
 
             # Two witnesses must attest to seeing Car 1: Car 1 must be a neighbour AND in range of sight
             for witness in named_witnesses:
@@ -64,7 +68,7 @@ def PoL(cars):
                 witness_attestors = witness.name_witness()
                 if witness_attestors is None:
                     car.algorithm_honesty_output = False
-                    #print('witness is not in range of sight of car')
+                    #print('witness ihas no')
                     break
                 else:
 
@@ -74,9 +78,14 @@ def PoL(cars):
                     #check attestor 2 is not already a witness
                     tries = 5
                     for trial in range(tries):
-                        witness_attestors = witness.name_witness()
                         if (witness_attestors[0] != car and witness_attestors[1] != car) and (witness_attestors[0] != witness_attestors[1]) and (witness_attestors[0] != named_witnesses[0] and witness_attestors[0] != named_witnesses[1]) and (witness_attestors[1] != named_witnesses[0] and witness_attestors[1] != named_witnesses[1]):
-                            break                
+                            break
+                        else:
+                            witness_attestors = witness.name_witness()
+                    
+                    if len(witness_attestors) < 2:
+                        car.algorithm_honesty_output = False
+
 
                     # Attestors must be a neighbour AND be in range of sight of witness
                     for attestor in witness_attestors:
@@ -123,8 +132,8 @@ def PoL(cars):
             
         car_colors = [color_map.get(node) for node in DAG.nodes()]
     
-    #nx.draw(DAG, node_color=car_colors)
+    nx.draw(DAG, node_color=car_colors)
     #print(Accuracy)
     #print(True_Negative, True_Positive, False_Negative, False_Positive)
-    #plt.show()
+    plt.show()
     return Accuracy, DAG, True_Positive, True_Negative, False_Positive, False_Negative
