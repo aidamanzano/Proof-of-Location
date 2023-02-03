@@ -48,29 +48,34 @@ class Car():
 
         for grid_square in [[x_index - 1, y_index], [x_index + 1, y_index], [x_index, y_index - 1], [x_index, y_index + 1], [x_index, y_index]]:
             #print(grid_square[0], environment_x_coordinates[0])
-            if grid_square[0] <= city.x_coordinates[0] or grid_square[0] >= city.x_coordinates[1]:
+            if grid_square[0] < city.x_coordinates[0] or grid_square[0] >= city.width:
                 pass
-            elif grid_square[1] <= city.y_coordinates[0] or grid_square[0] >= city.y_coordinates[1]:
+            elif grid_square[1] < city.y_coordinates[0] or grid_square[1] >= city.height:
                 pass
             else:
-                print([grid_square[0], grid_square[1]])
+                #print([grid_square[0], grid_square[1]])
 
                 #coerced will chose to add a lying car it does NOT see in the fake position grid
                 for car in city.grid[grid_square[0]][grid_square[1]]:
 
                     #first condition is redundant because coerced cars are a subset of honest, but leaving this in for clarity.
-                    if self.honest == True and self.coerced is True: 
+                    if self.honest == True and self.coerced is True:
+                        #print('entered condition of honest and coerced')
 
                         #a coerced car will add the FAKE position of a lying car 
                         #if it is in its range of sight and same grid square
+
+
                         if car.honest is False and self.ID != car.ID:
                             x, y = car.get_fake_position_indicies(city.grid_size)
                             if x == grid_square[0] and y == grid_square[1] and self.is_in_range_of_sight(car.fake_position):
                                 self.neighbours.add(car)
+                                #print('coerced car sees fake car in its fake position')
 
                         #This covers both honest cars and coerced cars, since coerced are a subset of honest cars. 
                         elif car.honest is True and self.ID != car.ID and self.is_in_range_of_sight(car.position):
                             self.neighbours.add(car)
+                            #print('coerced car sees honest car')
 
                     elif self.honest == True and self.coerced is False: 
                         #an honest car will add the REAL position of a lying car if it
@@ -80,11 +85,14 @@ class Car():
                             x, y = car.get_position_indicies(city.grid_size)
                             if x == grid_square[0] and y == grid_square[1] and self.is_in_range_of_sight(car.position):
                                 self.neighbours.add(car)
+                                #print('honest car sees fake car in their real position', car.honest)
+                                
 
                         #This covers both honest cars and coerced cars, since coerced are a subset of honest cars. 
                         elif car.honest is True and self.ID != car.ID:
                             if self.is_in_range_of_sight(car.position):
                                 self.neighbours.add(car)
+                                #print('honest car sees honest car')
 
         return self.neighbours
 

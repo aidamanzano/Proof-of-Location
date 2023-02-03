@@ -7,7 +7,7 @@ def honest_cars_init(N_honest_cars:int, car_list:list):
     for car in range(N_honest_cars):
         position = (np.random.rand(2)*2).tolist()
         velocity = ((np.random.rand(2)*2)-1).tolist()
-        range_of_sight = np.random.uniform(0, 0.25, size=(1)).astype(int)
+        range_of_sight = 0.1 #np.random.uniform(0, 0.25, size=(1)).astype(int)
         ID = str(car)
         coerced = False
         car_list.append(Car(position, velocity, range_of_sight, ID, coerced))
@@ -18,7 +18,7 @@ def coerced_cars_init(N_coerced_cars:int, car_list:list):
     for car in range(N_coerced_cars):
         position = (np.random.rand(2)*2).tolist()
         velocity = ((np.random.rand(2)*2)-1).tolist()
-        range_of_sight = np.random.uniform(0, 0.25, size=(1)).astype(int)
+        range_of_sight = 0.1 #np.random.uniform(0, 0.25, size=(1)).astype(int)
         ID = str(car)
         coerced = True
         car_list.append(Car(position, velocity, range_of_sight, ID, coerced))
@@ -29,8 +29,8 @@ def lying_cars_init(N_lying_cars:int, car_list:list):
     for liar_car in range(N_lying_cars):
         position = (np.random.rand(2)*2).tolist()
         velocity = ((np.random.rand(2)*2)-1).tolist()
-        #range_of_sight = round(random.uniform(0.1,0.2), 100)
-        range_of_sight = np.random.uniform(0, 0.25, size=(1)).astype(int)
+        range_of_sight = 0.1 #round(random.uniform(0.1,0.2), 100)
+        #range_of_sight = np.random.uniform(0, 0.25, size=(1)).astype(int)
         ID = str(liar_car)
         coerced = False
         fake_position = (np.random.rand(2)*2).tolist()
