@@ -28,10 +28,12 @@ def PoL(cars):
         #A car with no witnesses is deemed a liar
         if named_witnesses is None:
             car.algorithm_honesty_output = False
+            print('car has 0 witnesses', car.honest)
             
         #or has less than the required number of witnesses, or has named duplicate witnesses
         elif len(named_witnesses) < 2 or (len(named_witnesses) != len(set(named_witnesses))):
             car.algorithm_honesty_output = False
+            print('car has less than 2 witnesses or cross referenced witnesses')
                 
         else:
             
@@ -43,14 +45,17 @@ def PoL(cars):
                 #The witness cannot have been named before (ie: cannot be Car 1)
                 if witness.ID in named_cars:
                     car.algorithm_honesty_output = False
+                    print('witness has already been named')
 
                 #Car 1 must be a neighbour of the witness
                 elif witness.is_car_a_neighbour(car) is False:
                     car.algorithm_honesty_output = False
+                    print('caris not neighbour of the witness')
                     
                 # Car 1 must be within the range of sight of the witness
                 elif witness.is_in_range_of_sight(car.position) is False:
                     car.algorithm_honesty_output = False
+                    print('car is not in ROS of witness')
                     
                 else:
                     car.algorithm_honesty_output = True
@@ -69,10 +74,12 @@ def PoL(cars):
                 #TODO: should we set the witness.algorithm_honesty_output = False here instead of the first car?
                 if witness_attestors is None:
                     car.algorithm_honesty_output = False
+                    print('car witness has no attestors')
                     
                 #witness must have at least 2 attestors, and check that witness doesn't select same attestor twice
                 elif len(witness_attestors) < 2 or (len(witness_attestors) != len(set(witness_attestors))):
                     car.algorithm_honesty_output = False
+                    print('witnesses of car has less than 2 attestors, or named same attestor twice')
 
                     
                 else:
@@ -84,14 +91,17 @@ def PoL(cars):
                         # Attestors must be a neighbour of the witness
                         if attestor.is_car_a_neighbour(witness) is False:
                             car.algorithm_honesty_output = False
+                            print('witnesses is not a neighobour of the attestor')
                             
                         # Witness must be in range of sight of its attestor
                         elif attestor.is_in_range_of_sight(witness.position) is False:
                             car.algorithm_honesty_output = False
+                            print('witness is not in ROS of attestor')
 
                         #check that none of the attestors have already been named before as a witness or car 1.
                         elif attestor.ID in named_cars:
-                            car.algorithm_honesty_output = False                            
+                            car.algorithm_honesty_output = False           
+                            print('attestor has already been named', car.ID)                 
 
                         else:
                             car.algorithm_honesty_output = True
@@ -122,7 +132,6 @@ def PoL(cars):
             
         car_colors = [color_map.get(node) for node in DAG.nodes()]
     
-    nx.draw(DAG, node_color=car_colors)
-    plt.show()
+    #nx.draw(DAG, node_color=car_colors)
+    #plt.show()
     return Accuracy, DAG, True_Positive, True_Negative, False_Positive, False_Negative
-

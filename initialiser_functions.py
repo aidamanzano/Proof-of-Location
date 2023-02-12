@@ -13,10 +13,10 @@ def honest_cars_init(N_honest_cars:int, car_list:list):
         car_list.append(Car(position, velocity, range_of_sight, ID, coerced))
     return car_list
 
-def coerced_cars_init(N_coerced_cars:int, car_list:list):
+def coerced_cars_init(N_coerced_cars:int, car_list:list, position=(np.random.rand(2)*2).tolist()):
 #initialising coerced cars with a random position, velocity and range of sight
     for car in range(N_coerced_cars):
-        position = (np.random.rand(2)*2).tolist()
+        position = position
         velocity = ((np.random.rand(2)*2)-1).tolist()
         range_of_sight = 0.1 #np.random.uniform(0, 0.25, size=(1)).astype(int)
         ID = str(car)
@@ -24,20 +24,18 @@ def coerced_cars_init(N_coerced_cars:int, car_list:list):
         car_list.append(Car(position, velocity, range_of_sight, ID, coerced))
     return car_list
 
-def lying_cars_init(N_lying_cars:int, car_list:list):
+def lying_cars_init(N_lying_cars:int, car_list:list, fake_position=(np.random.rand(2)*2).tolist()):
 #initialising lying cars with a random position, velocity and range of sight
     for liar_car in range(N_lying_cars):
         position = (np.random.rand(2)*2).tolist()
         velocity = ((np.random.rand(2)*2)-1).tolist()
         range_of_sight = 0.1 #round(random.uniform(0.1,0.2), 100)
-        #range_of_sight = np.random.uniform(0, 0.25, size=(1)).astype(int)
+        #range_of_sight = np.random.uniform(0, 0.25, size=(1)).astype(float)
         ID = str(liar_car)
         coerced = False
-        fake_position = (np.random.rand(2)*2).tolist()
+        fake_position = fake_position #(np.random.rand(2)*2).tolist()  #position = np.random.uniform(0, 0.25, size=(2)).tolist()
         car_list.append(lying_car(position, velocity, range_of_sight, ID, coerced, fake_position))
     return car_list
-
-#position = np.random.uniform(0, 0.25, size=(2)).tolist()
 
 
 def car_list_generator(Number_of_honest_cars, Number_of_lying_cars, Number_of_coerced_cars):
@@ -46,6 +44,3 @@ def car_list_generator(Number_of_honest_cars, Number_of_lying_cars, Number_of_co
     cars = coerced_cars_init(Number_of_coerced_cars, cars)
     cars = lying_cars_init(Number_of_lying_cars, cars)
     return cars
-
-#cars = car_list_generator(700, 100, 200)
-#print(cars)
